@@ -1,0 +1,1216 @@
+@startuml "de_Funk Full Vision — Target Architecture"
+
+skinparam classFontName "Courier New"
+skinparam classFontSize 10
+skinparam packageFontSize 12
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam style strictuml
+
+title de_Funk Full Vision — Target Architecture\nEngine/Session pattern. Typed data classes. Three paths.
+
+note as ThreePaths
+  | Path | Reads | Writes | Config Needed |
+  | **Ingestion** | External APIs | Raw + Bronze | ProviderConfig + EndpointConfig |
+  | **Build** | Bronze + Silver | Silver | DomainModelConfig + SourceConfig |
+  | **Query** | Silver (+ Bronze) | nothing | DomainModelConfig (tables, graph, measures) |
+end note
+
+' ══════════════════════════════════════════════════════════
+' DOMAIN DATA CLASSES
+' ══════════════════════════════════════════════════════════
+package "Domain Data Classes" #FFCC66 {
+
+  class SchemaField <<dataclass>> {
+    + name : str
+    + type : str
+    + nullable : bool
+    + description : str
+    + derived : Optional[str]
+    + fk : Optional[str]
+    + format : Optional[str]
+  }
+
+  class EdgeSpec <<dataclass>> {
+    + name : str
+    + from_table : str
+    + to_table : str
+    + join_keys : list[str]
+    + cardinality : str
+    + target_domain : Optional[str]
+    + optional : bool
+  }
+
+  class MeasureDef <<dataclass>> {
+    + name : str
+    + aggregation : str
+    + field : str | dict
+    + label : str
+    + format : Optional[str]
+    + options : dict
+  }
+
+  class AliasSpec <<dataclass>> {
+    + target_column : str
+    + expression : str
+  }
+
+  class EnrichSpec <<dataclass>> {
+    + from_table : str
+    + join : list[str]
+    + columns : list[str]
+  }
+
+  class TableConfig <<dataclass>> {
+    + table : str
+    + table_type : str
+    + schema : list[SchemaField]
+    + primary_key : list[str]
+    + unique_key : list[str]
+    + partition_by : list[str]
+    + measures : list[MeasureDef]
+    + enrich : list[EnrichSpec]
+    + pipeline : list[PipelineStep]
+    + extends : Optional[str]
+  }
+
+  class SourceConfig <<dataclass>> {
+    + source : str
+    + maps_to : str
+    + from_ref : str
+    + aliases : list[AliasSpec]
+    + domain_source : Optional[str]
+    + filter : list[str]
+    + extends : Optional[str]
+  }
+
+  class GraphSpec <<dataclass>> {
+    + edges : list[EdgeSpec]
+    + paths : dict[str, Any]
+  }
+
+  class ModelStorageSpec <<dataclass>> {
+    + format : str
+    + silver_root : Optional[str]
+  }
+
+  class PhaseSpec <<dataclass>> {
+    + tables : list[str]
+  }
+
+  class BuildSpec <<dataclass>> {
+    + sort_by : list[str]
+    + optimize : bool
+    + partitions : list[str]
+    + phases : dict[str, PhaseSpec]
+  }
+
+  BuildSpec *-- PhaseSpec : phases
+
+  class MeasuresSpec <<dataclass>> {
+    + simple : list[MeasureDef]
+    + computed : list[MeasureDef]
+  }
+
+  class HookDef <<dataclass>> {
+    + fn : str
+    + params : dict
+  }
+
+  class PipelineStep <<dataclass>> {
+    + op : str
+    + fn : Optional[str]
+    + params : dict
+  }
+
+  class HooksConfig <<dataclass>> {
+    + pre_build : list[HookDef]
+    + before_build : list[HookDef]
+    + after_build : list[HookDef]
+    + post_build : list[HookDef]
+  }
+
+  class DomainModelConfig <<dataclass>> {
+    + model : str
+    + version : str
+    + description : str
+    + extends : list[str]
+    + depends_on : list[str]
+    + status : str
+    + storage : ModelStorageSpec
+    + graph : GraphSpec
+    + build : BuildSpec
+    + measures : MeasuresSpec
+    + hooks : HooksConfig
+    + metadata : dict
+    --
+    + tables : dict[str, TableConfig]
+    + sources : dict[str, SourceConfig]
+    + views : dict[str, Any]
+  }
+
+  DomainModelConfig *-- ModelStorageSpec : storage
+  DomainModelConfig *-- GraphSpec : graph
+  DomainModelConfig *-- BuildSpec : build
+  DomainModelConfig *-- MeasuresSpec : measures
+  DomainModelConfig *-- HooksConfig : hooks
+  DomainModelConfig *-- TableConfig : tables
+  DomainModelConfig *-- SourceConfig : sources
+  HooksConfig *-- HookDef : hook definitions
+  TableConfig *-- PipelineStep : pipeline steps
+  TableConfig *-- SchemaField : schema columns
+  TableConfig *-- MeasureDef : table measures
+  TableConfig *-- EnrichSpec : enrichments
+  SourceConfig *-- AliasSpec : field aliases
+  GraphSpec *-- EdgeSpec : join edges
+  MeasuresSpec *-- MeasureDef : definitions
+}
+
+' ══════════════════════════════════════════════════════════
+' PROVIDER DATA CLASSES
+' ══════════════════════════════════════════════════════════
+package "Provider Data Classes" #CC9966 {
+
+  class EndpointSchemaField <<dataclass>> {
+    + name : str
+    + type : str
+    + source_field : str
+    + nullable : bool
+    + description : str
+    + transform : Optional[str]
+    + coerce : Optional[str]
+    + default : Optional[Any]
+  }
+
+  class EndpointConfig <<dataclass>> {
+    + endpoint_id : str
+    + provider : str
+    + method : str
+    + endpoint_pattern : str
+    + format : str
+    + default_query : dict
+    + required_params : list[str]
+    + pagination_type : str
+    + bulk_download : bool
+    + json_structure : str
+    + schema : list[EndpointSchemaField]
+    + bronze : Optional[str]
+    + partitions : list[str]
+    + write_strategy : str
+    + key_columns : list[str]
+    + date_column : Optional[str]
+    + domain : str
+    + status : str
+  }
+
+  class ProviderConfig <<dataclass>> {
+    + provider_id : str
+    + provider : str
+    + api_type : str
+    + base_url : str
+    + auth_model : str
+    + env_api_key : str
+    + rate_limit_per_sec : float
+    + default_headers : dict
+    + provider_settings : dict
+    + endpoints : list[str]
+    + models : list[str]
+    + category : str
+    + status : str
+  }
+
+  EndpointConfig *-- EndpointSchemaField : schema fields
+}
+
+' ══════════════════════════════════════════════════════════
+' INFRASTRUCTURE DATA CLASSES
+' ══════════════════════════════════════════════════════════
+package "Infrastructure Data Classes" #E6E6E6 {
+
+  class RootsConfig <<dataclass>> {
+    + raw : str
+    + bronze : str
+    + silver : str
+    + models : str
+  }
+
+  class ApiLimits <<dataclass>> {
+    + duckdb_memory_limit : str
+    + max_sql_rows : int
+    + max_dimension_values : int
+    + max_response_mb : float
+  }
+
+  class TablePath <<dataclass>> {
+    + root : str
+    + rel : str
+    + partitions : list[str]
+  }
+
+  class SparkConfig <<dataclass>> {
+    + driver_memory : str
+    + executor_memory : str
+    + shuffle_partitions : int
+    + timezone : str
+  }
+
+  class DuckDBConfig <<dataclass>> {
+    + database_path : str
+    + memory_limit : str
+    + threads : int
+    + read_only : bool
+  }
+
+  class ConnectionConfig <<dataclass>> {
+    + type : str
+    + spark : Optional[SparkConfig]
+    + duckdb : Optional[DuckDBConfig]
+  }
+
+  class ClusterConfig <<dataclass>> {
+    + spark_master : str
+    + fallback_to_local : bool
+    + task_batch_size : int
+  }
+
+  class RetryConfig <<dataclass>> {
+    + max_retries : int
+    + retry_delay_seconds : float
+    + exponential_backoff : bool
+  }
+
+  class StorageConfig <<dataclass>> {
+    + roots : RootsConfig
+    + api : ApiLimits
+    + default_format : str
+    + domain_roots : dict[str, str]
+    + tables : dict[str, TablePath]
+  }
+
+  class RunConfig <<dataclass>> {
+    + defaults : dict
+    + providers : dict[str, dict]
+    + silver_models : list[str]
+    + cluster : ClusterConfig
+    + retry : RetryConfig
+    + profiles : dict[str, dict]
+  }
+
+  StorageConfig *-- RootsConfig : mount points
+  StorageConfig *-- ApiLimits : query limits
+  StorageConfig *-- TablePath : table paths
+  ConnectionConfig *-- SparkConfig : spark settings
+  ConnectionConfig *-- DuckDBConfig : duckdb settings
+  RunConfig *-- ClusterConfig : cluster settings
+  RunConfig *-- RetryConfig : retry policy
+}
+
+' ══════════════════════════════════════════════════════════
+' ENGINE (long-lived — connection + read/write mechanics)
+' ══════════════════════════════════════════════════════════
+package "Engine" #80E0D0 {
+
+  class Engine {
+    + conn : DataConnection
+    + backend : str
+    - _ops : DataOps
+    - _sql : SqlOps
+    --
+    .. read / write ..
+    + read(path) : Any
+    + write(df, path, format, mode) : Any
+    + create_df(rows, schema) : Any
+    + scan(path) : str
+    .. column operations ..
+    + select(df, columns) : Any
+    + drop(df, columns) : Any
+    + derive(df, col, expr) : Any
+    .. row operations ..
+    + filter(df, filters) : Any
+    + dedup(df, subset) : Any
+    .. combine operations ..
+    + join(left, right, on, how) : Any
+    + union(dfs) : Any
+    .. reshape operations ..
+    + unpivot(df, id_cols, value_cols, var_name, val_name) : Any
+    + window(df, partition, order, expr, alias) : Any
+    .. analytical operations (shared by build + query) ..
+    + pivot(df, rows, cols, measures) : Any
+    + aggregate(df, group_by, aggs) : Any
+    .. inspection ..
+    + count(df) : int
+    + to_pandas(df) : DataFrame
+    + columns(df) : list[str]
+    .. SQL ..
+    + execute_sql(sql) : Any
+    --
+    + {static} for_spark(spark, storage) : Engine
+    + {static} for_duckdb(duckdb_path, storage) : Engine
+  }
+
+  interface DataOps <<interface>> {
+    .. read / write ..
+    + read(path) : Any
+    + write(df, path, format, mode) : Any
+    + create_df(rows, schema) : Any
+    .. column operations ..
+    + select(df, columns) : Any
+    + drop(df, columns) : Any
+    + derive(df, col, expr) : Any
+    .. row operations ..
+    + filter(df, filters) : Any
+    + dedup(df, subset) : Any
+    .. combine operations ..
+    + join(left, right, on, how) : Any
+    + union(dfs) : Any
+    .. reshape operations ..
+    + unpivot(df, id_cols, value_cols, var_name, val_name) : Any
+    + window(df, partition, order, expr, alias) : Any
+    .. analytical operations ..
+    + pivot(df, rows, cols, measures) : Any
+    + aggregate(df, group_by, aggs) : Any
+    .. inspection ..
+    + count(df) : int
+    + to_pandas(df) : DataFrame
+    + columns(df) : list[str]
+  }
+
+  interface SqlOps <<interface>> {
+    + execute_sql(sql, max_rows) : list
+    + scan(path) : str
+    + build_from(tables, resolver) : str
+    + build_where(filters) : str
+    + distinct_values(resolved) : list
+  }
+
+  class DuckDBOps {
+    - _conn : duckdb.Connection
+    - _scan_cache : dict
+  }
+
+  class SparkOps {
+    - _spark_session
+  }
+
+  class DuckDBSql {
+    - _conn : duckdb.Connection
+  }
+
+  class SparkSql {
+    - _spark_session
+  }
+
+  Engine *-- DataOps : _ops
+  Engine *-- SqlOps : _sql
+  DataOps <|.. DuckDBOps
+  DataOps <|.. SparkOps
+  SqlOps <|.. DuckDBSql
+  SqlOps <|.. SparkSql
+}
+
+' ══════════════════════════════════════════════════════════
+' SESSIONS (short-lived — scoped to a path)
+' ══════════════════════════════════════════════════════════
+package "Sessions" #80E0D0 {
+
+  abstract class Session <<abstract>> {
+    + engine : Engine
+    + storage_router : StorageRouter
+    --
+    + raw_path(provider, endpoint) : str
+    + bronze_path(provider, endpoint) : str
+    + silver_path(domain, model) : str
+    + {abstract} close()
+  }
+
+  class IngestSession {
+    + providers : dict[str, ProviderConfig]
+    + endpoints : dict[str, EndpointConfig]
+    + run : RunConfig
+    --
+    + get_provider(provider_id) : ProviderConfig
+    + get_endpoint(provider_id, endpoint_id) : EndpointConfig
+  }
+
+  class BuildSession {
+    + models : dict[str, DomainModelConfig]
+    + graph : DomainGraph
+    --
+    + get_model(model_name) : DomainModelConfig
+    + get_dependencies(model_name) : list[str]
+    + build(model_name) : BuildResult
+    + build_all() : list[BuildResult]
+  }
+
+  class QuerySession {
+    + models : dict[str, DomainModelConfig]
+    + resolver : FieldResolver
+    --
+    + resolve(ref_str) : ResolvedField
+    + find_join_path(src, dst) : list
+    + distinct_values(resolved) : list
+    + build_from(tables, allowed_domains) : str
+    + build_where(filters) : str
+  }
+
+  Session <|-- IngestSession
+  Session <|-- BuildSession
+  Session <|-- QuerySession
+
+  ' Sessions created by DeFunk app, not Engine directly
+
+  Session *-- StorageRouter : path resolution
+
+  QuerySession *-- FieldResolver : field resolution
+}
+
+' ══════════════════════════════════════════════════════════
+' FIELD RESOLUTION
+' ══════════════════════════════════════════════════════════
+package "Field Resolution" #80E0D0 {
+
+  class FieldRef <<dataclass>> {
+    + domain : str
+    + field : str
+    + raw : str
+  }
+
+  class ResolvedField <<dataclass>> {
+    + ref : FieldRef
+    + table_name : str
+    + column : str
+    + silver_path : Path
+    + format_code : Optional[str]
+    + domain : str <<property>>
+  }
+
+  class DomainGraph {
+    - _adjacency : dict[str, list[tuple]]
+    - _domain_deps : dict[str, set[str]]
+    - _table_to_domain : dict[str, str]
+    --
+    + __init__(models: dict[str, DomainModelConfig])
+    + find_join_path(src, dst, allowed_domains) : list[tuple]
+    + reachable_domains(core_domains) : set[str]
+    + neighbors(table_name) : list[str]
+    + domains_for_table(table_name) : str
+    + all_tables() : list[str]
+    + all_edges() : list[EdgeSpec]
+    + subgraph(domains) : DomainGraph
+    + distance(table_a, table_b) : int
+    + connected_components() : list[set[str]]
+  }
+
+  class FieldResolver {
+    - _index : dict
+    + graph : DomainGraph
+    --
+    + __init__(models: dict[str, DomainModelConfig])
+    + resolve(ref_str) : ResolvedField
+    + resolve_many(refs) : dict
+    + get_field_catalog() : dict
+  }
+
+  class StorageRouter {
+    + config : StorageConfig
+    --
+    + raw_path(provider, endpoint) : Path
+    + bronze_path(provider, endpoint) : Path
+    + silver_path(model: DomainModelConfig) : Path
+    + model_path(model_name, version) : Path
+  }
+
+  DomainGraph ..> DomainModelConfig : reads GraphSpec.edges
+  DomainGraph ..> EdgeSpec : built from
+  FieldResolver *-- DomainGraph : graph
+  FieldResolver ..> DomainModelConfig : reads schema
+}
+
+' ══════════════════════════════════════════════════════════
+' CONFIG LOADING
+' ══════════════════════════════════════════════════════════
+package "Config Loading" #FFCC66 {
+
+  class BaseTemplate <<dataclass>> {
+    + type : str
+    + model : str
+    + version : str
+    + description : str
+    + extends : Optional[str]
+    + canonical_fields : list[SchemaField]
+    + tables : dict[str, TableConfig]
+    + depends_on : list[str]
+  }
+
+  note bottom of BaseTemplate
+    Reusable markdown templates in domains/_base/:
+    _base._base_.entity → root entity pattern
+    _base.finance.securities → securities pattern
+    _base.corporate.earnings → earnings pattern
+    _base.accounting.financial_statement → etc.
+
+    Inheritance chain (resolved by extends_resolver):
+    _base._base_.entity
+      └─ _base.finance.securities
+           └─ securities.stocks (model)
+                └─ fact_stock_prices (table extends _fact_prices)
+
+    deep_merge: parent fields + child overrides
+    Tables/sources can also extend base table templates
+  end note
+
+  class DomainConfigLoader {
+    - domains_dir : Path
+    - _parse_cache : dict
+    --
+    + load_model_config(model_name) : DomainModelConfig
+    + load_all() : dict[str, DomainModelConfig]
+    + load_base(base_ref) : BaseTemplate
+    + validate_model(model_name) : list[str]
+    + validate_all() : dict[str, list[str]]
+    + get_inheritance_tree(model_name) : dict
+  }
+
+  class config_translator <<module>> {
+    + {static} translate_domain_config(config) : dict
+  }
+
+  class extends_resolver <<module>> {
+    + {static} parse_front_matter(file_path) : dict
+    + {static} deep_merge(base, override) : dict
+    + {static} resolve_extends_reference(ref, dir, cache) : dict
+    + {static} resolve_nested_extends(config, dir, cache) : dict
+    + {static} validate_extends_chain(config, dir) : list[str]
+    + {static} detect_circular_extends(ref, dir, visited) : bool
+    + {static} get_inheritance_chain(ref, dir) : list[str]
+  }
+
+  note as ExtendsValidation
+    Inheritance validation logic:
+
+    1. resolve: _base.finance.securities
+       → find domains/_base/finance/securities.md
+       → parse frontmatter → BaseTemplate
+       → if not found: raise ConfigurationError
+
+    2. validate chain: no circular extends
+       → A extends B extends C extends A → error
+       → detect_circular_extends tracks visited set
+
+    3. deep_merge(parent, child):
+       → parent canonical_fields + child overrides
+       → parent tables merged with child tables
+       → child values win at leaf level
+       → lists are replaced (not appended)
+
+    4. nested extends (table-level):
+       → fact_stock_prices extends _base._fact_prices
+       → table schema merged same way
+       → validate parent table exists in base
+
+    5. get_inheritance_chain for debugging:
+       → returns [root, ..., parent, self]
+       → e.g. [_base_.entity, finance.securities, stocks]
+  end note
+
+  DomainConfigLoader ..> config_translator : translates
+  DomainConfigLoader ..> extends_resolver : resolves + validates inheritance
+  DomainConfigLoader ..> BaseTemplate : loads base templates
+  BaseTemplate ..> DomainModelConfig : merged into via deep_merge
+}
+
+' ══════════════════════════════════════════════════════════
+' CONNECTION HIERARCHY
+' ══════════════════════════════════════════════════════════
+package "Connections" #E6E6E6 {
+
+  interface DataConnection <<interface>> {
+    + connect() : Any
+    + execute_raw(sql) : Any
+    + read_table(path, format) : Any
+    + write_table(df, path, format, mode) : Any
+    + stop()
+  }
+
+  class DuckDBConnection {
+    + conn : duckdb.Connection
+    + db_path : str
+    + delta_enabled : bool
+    --
+    + read_table(path, format, version, timestamp)
+    + execute_sql(query) : Any
+    + write_delta_table(df, path, mode, partition_by)
+    + apply_filters(df, filters) : Any
+    + to_pandas(df) : DataFrame
+    + count(df) : int
+  }
+
+  class SparkConnection {
+    + spark_session
+    --
+    + read_table(path, format, version, timestamp)
+    + write_delta_table(df, path, mode, partition_by)
+    + merge_delta_table(source_df, target_path, condition)
+    + apply_filters(df, filters) : Any
+    + to_pandas(df) : DataFrame
+    + count(df) : int
+  }
+
+  DataConnection <|.. DuckDBConnection
+  DataConnection <|.. SparkConnection
+  Engine *-- DataConnection : conn
+}
+
+' ══════════════════════════════════════════════════════════
+' BUILD PATH
+' ══════════════════════════════════════════════════════════
+package "Build Path" #FF9933 {
+
+  class BaseModelBuilder <<abstract>> {
+    + model_name : str
+    + depends_on : list[str]
+    + session : BuildSession
+    --
+    + {abstract} get_model_class() : Type
+    + validate()
+    + pre_build()
+    + post_build(result)
+    + build() : BuildResult
+  }
+
+  class DomainBuilderFactory {
+    --
+    + {static} create_builders(domains_dir) : dict
+  }
+
+  class BaseModel <<abstract>> {
+    + session : BuildSession
+    + config : DomainModelConfig
+    - _dims : dict
+    - _facts : dict
+    --
+    .. build lifecycle (calls hooks) ..
+    + build() : tuple[dict, dict]
+    + write_tables(output_root, format, mode)
+    + get_table(name) : Any
+    + has_table(name) : bool
+    + list_tables() : list[str]
+    .. hook methods (overridable OR config-driven) ..
+    + before_build()
+    + after_build(dims, facts)
+    + custom_node_loading(node_id, config) : Optional[DF]
+    .. hook dispatch (config first, then class override) ..
+    - _run_hooks(hook_name, **context)
+  }
+
+  note bottom of BaseModel
+    Hook resolution order:
+    1. Check config.hooks.{name} for registered fns
+    2. If no config hook, call self.{name}() override
+    3. If neither, no-op (default behavior)
+
+    Simple hooks → YAML config (no subclass needed)
+    Complex logic → Python subclass override
+    Both coexist on same model.
+  end note
+
+  class DomainModel {
+    .. default for all domains ..
+    .. all hooks handled via config ..
+    + custom_node_loading(node_id, config)
+    .. handles: seed, union, distinct, window, unpivot ..
+  }
+
+  class BuildResult <<dataclass>> {
+    + model_name : str
+    + success : bool
+    + rows_written : int
+    + duration_seconds : float
+    + error : Optional[str]
+  }
+
+  BaseModel <|-- DomainModel
+  BaseModel ..> BuildSession : uses session
+  BaseModelBuilder ..> BuildSession : uses session
+  BaseModelBuilder ..> BaseModel : creates + builds
+}
+
+' ══════════════════════════════════════════════════════════
+' PIPELINE EXECUTOR (config-driven pipeline with hooks)
+' ══════════════════════════════════════════════════════════
+package "Pipeline Executor" #FF9933 {
+
+  class NodeExecutor {
+    .. config-driven pipeline executor ..
+    .. dispatches ops from registry ..
+    + session : BuildSession
+    - _ops : dict[str, Callable]
+    --
+    .. orchestration ..
+    + execute_all(nodes_config) : dict[str, DF]
+    + execute_node(node_id, node_config, built) : DF
+    + execute_pipeline(df, pipeline_steps) : DF
+    .. operation registry ..
+    + register_op(name: str, handler: Callable)
+    + get_op(name: str) : Callable
+    + list_ops() : list[str]
+    .. source loading → engine.read ..
+    - _load_bronze(ref) : DF
+    - _load_silver(model, table) : DF
+    - _load_from_node(id, built) : DF
+    .. built-in ops → engine methods ..
+    - _op_filter(df, cfg)   → engine.filter()
+    - _op_join(df, cfg)     → engine.join()
+    - _op_select(df, cfg)   → engine.select()
+    - _op_derive(df, cfg)   → engine.derive()
+    - _op_dedup(df, cfg)    → engine.dedup()
+    - _op_drop(df, cfg)     → engine.drop()
+    - _op_enrich(df, cfg)   → engine.join() + select()
+    - _op_window(df, cfg)   → engine.window()
+    - _op_unpivot(df, cfg)  → engine.unpivot()
+    - _op_pivot(df, cfg)    → engine.pivot()
+    - _op_aggregate(df, cfg) → engine.aggregate()
+    - _op_hook(df, cfg)     → calls registered Python fn
+    .. special node types ..
+    - _build_seed(cfg)      → engine.create_df()
+    - _build_union(cfg)     → engine.read() * N + union()
+    - _build_distinct(cfg)  → engine.read() + dedup()
+    - _build_generated(cfg) → engine.execute_sql() or hook
+  }
+
+  note as PipelineConfig
+    All hooks declared in YAML config:
+
+    # model.md frontmatter
+    hooks:
+      after_build:
+        - {fn: plugins.company_cik.fix_ids, params: {ticker_col: ticker}}
+      post_build:
+        - {fn: plugins.technicals.compute_rsi, params: {periods: [14, 30]}}
+
+    # Per-node pipeline (in table config or graph.nodes)
+    node: fact_prices
+      from: bronze.alpha_vantage_daily
+      pipeline:
+        - {op: filter, conditions: ["asset_type = 'stock'"]}
+        - {op: derive, expressions: {security_id: "HASH(ticker)"}}
+        - {op: hook, fn: plugins.company_cik.fix_ids, params: {ticker_col: ticker}}
+        - {op: dedup, keys: [security_id, date_id]}
+
+    Backward compatible: no pipeline key =
+    implicit order (filter→join→select→derive→dedup)
+  end note
+
+  note as OpRegistryNote
+    Operation registry (extensible):
+
+    Built-in (registered at init):
+      filter, join, select, derive, dedup,
+      drop, enrich, window, unpivot, hook
+
+    User-defined:
+      executor.register_op("cik_fix", cik_enrichment_fn)
+      executor.register_op("technicals", compute_rsi_macd)
+
+    Plugin discovery:
+      BuildPluginRegistry.discover("plugins/")
+      → auto-registers all @pipeline_op decorated fns
+
+    Hook op signature:
+      def my_op(df, engine, config, **params) -> DF
+      → receives DataFrame, engine for ops, config for context
+  end note
+
+  note as BuildFlow
+    Full build orchestration:
+    ┌───────────────────────────────────────────────┐
+    │ BaseModelBuilder.build()                      │
+    │  ├─ validate()                                │
+    │  ├─ run config.hooks.pre_build[]   ← FROM CFG │
+    │  ├─ BaseModel.build()                         │
+    │  │   ├─ run config.hooks.before_build[] ← CFG │
+    │  │   ├─ NodeExecutor.execute_all()            │
+    │  │   │   for each node:                       │
+    │  │   │     ├─ custom_node_loading()           │
+    │  │   │     │  (seed/union/calendar)            │
+    │  │   │     ├─ READ source                     │
+    │  │   │     └─ execute_pipeline(steps):        │
+    │  │   │         for each step in node.pipeline:│
+    │  │   │           _ops[step.op](df, step)      │
+    │  │   │           if op=hook: call step.fn()   │
+    │  │   ├─ separate dims / facts                 │
+    │  │   ├─ run config.hooks.after_build[] ← CFG  │
+    │  │   └─ write_tables()                        │
+    │  └─ run config.hooks.post_build[]      ← CFG  │
+    └───────────────────────────────────────────────┘
+
+    All hooks declared in YAML frontmatter:
+    • hooks.pre_build: [{fn, params}]
+    • hooks.before_build: [{fn, params}]
+    • hooks.after_build: [{fn, params}]
+    • hooks.post_build: [{fn, params}]
+    • node.pipeline: [{op: hook, fn, params}]
+
+    Hook fn signature:
+      def my_hook(df, engine, config, **params) -> DF
+    Always free to deploy any Python.
+  end note
+
+  NodeExecutor ..> BuildSession : calls session.engine ops
+  NodeExecutor ..> DomainModelConfig : reads pipeline config
+  BaseModel *-- NodeExecutor : pipeline execution
+}
+
+' ══════════════════════════════════════════════════════════
+' HANDLER HIERARCHY (API)
+' ══════════════════════════════════════════════════════════
+package "Handler Hierarchy (API)" #B3D9FF {
+
+  abstract class ExhibitHandler <<abstract>> {
+    + handles : set[str]
+    + session : QuerySession
+    --
+    + {abstract} execute(payload: dict, resolver: Any) : Any
+  }
+
+  class HandlerRegistry {
+    - _handlers : dict
+    + session : QuerySession
+    --
+    + register(handler)
+    + get(type_str) : ExhibitHandler
+    + supported_types : set <<property>>
+  }
+
+  class GraphicalHandler {
+    + handles : {line, bar, scatter, area, pie, heatmap}
+    --
+    + execute(payload, resolver) : GraphicalResponse
+  }
+
+  class PivotHandler {
+    + handles : {pivot, great_table, gt}
+    --
+    + execute(payload, resolver) : GreatTablesResponse
+  }
+
+  class MetricsHandler {
+    + handles : {cards.metric, kpi}
+    --
+    + execute(payload, resolver) : MetricResponse
+  }
+
+  class BoxHandler {
+    + handles : {box, ohlcv, candlestick}
+    --
+    + execute(payload, resolver) : dict
+  }
+
+  class TableDataHandler {
+    + handles : {table.data}
+    --
+    + execute(payload, resolver) : TableResponse
+  }
+
+  ExhibitHandler <|-- GraphicalHandler
+  ExhibitHandler <|-- PivotHandler
+  ExhibitHandler <|-- MetricsHandler
+  ExhibitHandler <|-- BoxHandler
+  ExhibitHandler <|-- TableDataHandler
+
+  ExhibitHandler ..> QuerySession : uses session
+}
+
+' ══════════════════════════════════════════════════════════
+' INGESTION PATH
+' ══════════════════════════════════════════════════════════
+package "Ingestion Path" #CC9966 {
+
+  abstract class BaseProvider <<abstract>> {
+    + session : IngestSession
+    --
+    + {abstract} list_work_items(**kwargs) : list
+    + {abstract} fetch(work_item, **kwargs) : Generator
+    + {abstract} normalize(records, work_item) : DF
+    + {abstract} get_table_name(work_item) : str
+  }
+
+  class IngestorEngine {
+    + session : IngestSession
+    + raw_sink : RawSink
+    + bronze_sink : BronzeSink
+    --
+    + run(provider_id, work_items, **kwargs)
+  }
+
+  class RawSink {
+    + raw_root : Path
+    --
+    + write(data, provider, endpoint, partition) : Path
+    + exists(provider, endpoint, partition) : bool
+    + read(provider, endpoint, partition) : Any
+  }
+
+  class BronzeSink {
+    + session : IngestSession
+    --
+    + write_if_missing(table, partitions, df) : bool
+    + upsert(df, table, merge_keys, partitions) : str
+    + rebuild_from_raw(provider, endpoint) : str
+  }
+
+  class HttpClient {
+    + base_url : str
+    - _token_bucket : TokenBucket
+    - _circuit_breaker : CircuitBreaker
+    --
+    + get(path, params) : Response
+  }
+
+  class TokenBucket {
+    + rate : float
+    + capacity : int
+    --
+    + acquire(timeout) : bool
+  }
+
+  class CircuitBreaker {
+    - _state : str
+    --
+    + call(fn, *args, **kwargs) : Any
+    + reset()
+  }
+
+  class ApiKeyPool {
+    - _keys : list
+    --
+    + next_key() : str
+    + mark_exhausted(key)
+  }
+
+  BaseProvider ..> IngestSession : uses session
+  IngestorEngine *-- RawSink : writes raw
+  IngestorEngine *-- BronzeSink : writes bronze
+  RawSink ..> BronzeSink : feeds
+  HttpClient *-- TokenBucket : rate limiting
+  HttpClient *-- CircuitBreaker : fault tolerance
+}
+
+' ══════════════════════════════════════════════════════════
+' ORCHESTRATION
+' ══════════════════════════════════════════════════════════
+package "Orchestration" #CC99FF {
+
+  class PipelineScheduler {
+    --
+    + add_job(func, trigger, **trigger_args)
+    + start()
+    + shutdown()
+  }
+
+  class DependencyGraph {
+    --
+    + build()
+    + topological_sort() : list[str]
+    + filter_buildable(model_names) : list[str]
+  }
+}
+
+' ══════════════════════════════════════════════════════════
+' APPLICATION (top-level wiring — industry standard pattern)
+' ══════════════════════════════════════════════════════════
+package "Application" #E6E6E6 {
+
+  class DeFunk {
+    + config : AppConfig
+    + engine : Engine
+    + graph : DomainGraph
+    + models : dict[str, DomainModelConfig]
+    + providers : dict[str, ProviderConfig]
+    + endpoints : dict[str, EndpointConfig]
+    --
+    + {static} from_config(config_path: Path) : DeFunk
+    + {static} from_app_config(config: AppConfig) : DeFunk
+    + build_session(**kwargs) : BuildSession
+    + query_session(**kwargs) : QuerySession
+    + ingest_session(**kwargs) : IngestSession
+  }
+
+  note right of DeFunk
+    Top-level application object.
+    Assembles everything from config:
+    1. ConfigLoader → AppConfig
+    2. DomainConfigLoader → models
+    3. DomainGraph from EdgeSpecs
+    4. Engine from ConnectionConfig
+    5. Session factories with right config slices
+
+    Usage:
+      app = DeFunk.from_config("configs/")
+      session = app.build_session()
+      session.build("securities.stocks")
+  end note
+
+  class ConfigLoader {
+    --
+    + load(connection_type, log_level) : AppConfig
+  }
+
+  class AppConfig <<dataclass>> {
+    + repo_root : Path
+    + connection : ConnectionConfig
+    + storage : StorageConfig
+    + run : RunConfig
+    + apis : dict[str, APIConfig]
+  }
+
+  AppConfig *-- RunConfig : runtime settings
+
+  class ConnectionFactory {
+    + {static} create(connection_type, **kwargs) : DataConnection
+  }
+
+  ConfigLoader ..> AppConfig : produces
+  DeFunk *-- AppConfig : config
+  DeFunk *-- Engine : engine
+  DeFunk *-- DomainGraph : graph
+  DeFunk *-- ArtifactStore : artifacts
+  DeFunk ..> DomainConfigLoader : loads models
+  DeFunk ..> IngestSession : creates
+  DeFunk ..> BuildSession : creates
+  DeFunk ..> QuerySession : creates
+}
+
+' ══════════════════════════════════════════════════════════
+' MODEL ARTIFACTS (trained ML models — separate from Silver data)
+' ══════════════════════════════════════════════════════════
+package "Model Artifacts" #B3FFB3 {
+
+  class ModelArtifact <<dataclass>> {
+    + model_name : str
+    + version : str
+    + trained_at : datetime
+    + artifact_path : Path
+    + metrics : dict
+    + config : dict
+    + status : str
+  }
+
+  class ArtifactStore {
+    + models_root : Path
+    --
+    + save(artifact: ModelArtifact, model_object: Any) : Path
+    + load(model_name, version) : tuple[ModelArtifact, Any]
+    + latest(model_name) : tuple[ModelArtifact, Any]
+    + list_versions(model_name) : list[ModelArtifact]
+    + register(artifact: ModelArtifact)
+  }
+
+  note as ArtifactNote
+    Forecast YAML config:
+    hooks:
+      post_build:
+        - {fn: plugins.forecast.train_and_save,
+           params: {methods: [arima, prophet],
+                    horizon: 30,
+                    retrain_if_stale_days: 7}}
+
+    Storage layout:
+    /storage/models/{model_name}/{version}/
+      model.pkl          ← trained model artifact
+      metadata.json      ← ModelArtifact fields
+      metrics.json       ← accuracy metrics
+
+    Results written to Silver:
+    /storage/silver/forecast/facts/fact_forecast_price/
+    /storage/silver/forecast/dims/dim_model_registry/
+
+    Recall: ArtifactStore.load("arima_aapl", "v3")
+    Retrain: PipelineScheduler checks staleness
+  end note
+
+  ArtifactStore *-- ModelArtifact : manages
+  ArtifactStore ..> StorageRouter : model_path()
+}
+
+' ══════════════════════════════════════════════════════════
+' PLUGIN SYSTEM
+' ══════════════════════════════════════════════════════════
+package "Plugin System" #B3FFB3 {
+  class BuildPluginRegistry {
+    --
+    + {static} register(hook_type, model_name, fn)
+    + {static} get(hook_type, model_name) : list
+    + {static} discover(plugins_dir)
+  }
+}
+
+' ══════════════════════════════════════════════════════════
+' KEY RELATIONSHIPS
+' ══════════════════════════════════════════════════════════
+
+' Config loading
+DomainBuilderFactory ..> DomainConfigLoader : loads configs
+DomainConfigLoader ..> DomainModelConfig : produces
+AppConfig *-- ConnectionConfig : connection
+AppConfig *-- StorageConfig : storage
+ConnectionFactory ..> DataConnection : creates
+DeFunk ..> ConnectionFactory : uses to create engine
+
+' Orchestration → Build
+PipelineScheduler ..> DependencyGraph : build order
+PipelineScheduler ..> DeFunk : creates sessions via
+PipelineScheduler ..> BaseModelBuilder : triggers builds
+DomainBuilderFactory ..> BuildSession : injects into builders
+DependencyGraph ..> DomainModelConfig : reads depends_on
+
+' Pipeline executor
+' NodeExecutor -> BuildSession edge is in Pipeline Executor package
+BuildPluginRegistry ..> NodeExecutor : registers ops into
+
+' Ingestion
+IngestorEngine ..> IngestSession : uses session
+IngestorEngine *-- BaseProvider : orchestrates
+BaseProvider ..> HttpClient : fetches via
+BronzeSink ..> IngestSession : uses session
+
+' Provider ↔ Endpoint
+ProviderConfig ..> EndpointConfig : lists endpoints
+
+' ══════════════════════════════════════════════════════════
+' MEASURES NOTE
+' ══════════════════════════════════════════════════════════
+note as MeasureNote
+  Measures: defined in DomainModelConfig.measures (YAML).
+  Translated to SQL by build_measure_sql() function.
+  No class hierarchy — YAML is the definition.
+  Used by: PivotHandler, MetricsHandler.
+end note
+
+' ══════════════════════════════════════════════════════════
+' STORAGE NOTE
+' ══════════════════════════════════════════════════════════
+note as StorageNote
+  | Layer | Mount | Path | Contents |
+  | Raw | HDD/NAS | /mnt/disk/storage/raw/{provider}/{endpoint}/ | Downloaded files |
+  | Bronze | SSD | /shared/storage/bronze/{provider}/{endpoint}/ | Typed Delta tables |
+  | Silver | SSD | /shared/storage/silver/{domain}/{model}/ | Dimensional star schema |
+  | Models | SSD | /shared/storage/models/{model_name}/{version}/ | Trained ML artifacts |
+end note
+
+' ══════════════════════════════════════════════════════════
+' COLOR LEGEND
+' ══════════════════════════════════════════════════════════
+legend right
+  | Color | Layer |
+  |<#FFCC66> Gold | Data Classes (from YAML/JSON) |
+  |<#80E0D0> Teal | Engine + Sessions + Resolution |
+  |<#FF9933> Orange | Build Path |
+  |<#B3D9FF> Light Blue | API Handlers |
+  |<#CC9966> Brown | Ingestion Path |
+  |<#CC99FF> Purple | Orchestration |
+  |<#E6E6E6> Gray | Infrastructure + Connections |
+  |<#B3FFB3> Green | Plugin System |
+endlegend
+
+@enduml

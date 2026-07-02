@@ -1,0 +1,2350 @@
+@startuml "de_Funk Complete — Directory Structure"
+
+skinparam classFontName "Courier New"
+skinparam classFontSize 9
+skinparam packageFontSize 11
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam style strictuml
+
+title de_Funk — grouped by src/de_funk/ directory\nAll classes, methods, attributes
+
+package "app/ (1)" #E6E6E6 {
+
+  class DeFunk {
+    + from_config()
+    + from_app_config()
+    + build_session()
+    + query_session()
+    + ingest_session()
+    - __init__()
+  }
+
+}
+
+package "api/ (5)" #B3D9FF {
+
+  class BronzeEndpointInfo {
+    + provider_id : str
+    + endpoint_id : str
+    + bronze_path : Path
+    + fields : dict[str, str]
+  }
+
+  class BronzeResolver {
+    + resolve()
+    + reachable_domains()
+    + find_join_path()
+    + get_endpoint_catalog()
+    - __init__()
+    - _build_index()
+    - _parse_ref()
+  }
+
+  class FieldRef {
+    + _known_domains : set[str]
+    --
+    - __init__()
+    - _match_domain()
+    - __repr__()
+  }
+
+  class FieldResolver {
+    + reachable_domains()
+    + find_join_path()
+    + resolve()
+    + resolve_many()
+    + get_field_catalog()
+    - __init__()
+    - _build_dir_to_model_map()
+    - _table_name_from_ref()
+    - _register_edge()
+    - _domain_for_table()
+    - _build_index()
+    - _resolve_temporal()
+    - _resolve_domain_field()
+  }
+
+  class ResolvedField {
+    + domain()
+    - __init__()
+    - __repr__()
+  }
+
+}
+
+package "api.handlers/ (7)" #B3D9FF {
+
+  class BoxHandler {
+    + handles : {'plotly.box', 'box', 'ohlcv', 'candl...
+    --
+    + execute()
+  }
+
+  class ExhibitHandler {
+    + handles : set[str]
+    + _engine : Any
+    + max_response_mb : float
+    + storage_root : Any
+    + _max_sql_rows : int
+    + _max_dimension_values : int
+    --
+    + execute()
+    + distinct_values()
+    + distinct_values_by_measure()
+    - _execute()
+    - _safe_scan()
+    - _build_from()
+    - _build_where()
+    - _build_order()
+    - _build_extra_where()
+    - _collect_tables()
+    - _collect_tables_with_domains()
+    - _resolve_filter_tables()
+    - _extra_filter_fields()
+    - _from_tables()
+  }
+
+  class GraphicalHandler {
+    + handles : {'plotly.line', 'line', 'line_chart',...
+    --
+    + execute()
+    - _shape_graphical()
+  }
+
+  class HandlerRegistry {
+    + register()
+    + get()
+    + supported_types()
+    - __init__()
+  }
+
+  class MetricsHandler {
+    + handles : {'cards.metric', 'kpi', 'metric_cards'}
+    --
+    + execute()
+  }
+
+  class PivotHandler {
+    + handles : {'table.pivot', 'pivot', 'pivot_table...
+    --
+    + execute()
+    - _row_labels()
+    - _totals_sql()
+    - _totals_sql_rows_only()
+    - _discover_col_values()
+    - _combo_to_key()
+    - _filter_clause()
+    - _measure_combo_pairs()
+    - _generate_wide_sql()
+    - _build_wide_columns()
+    - _query_2d_wide()
+    - _query_1d()
+  }
+
+  class TableDataHandler {
+    + handles : {'table.data', 'data_table'}
+    --
+    + execute()
+  }
+
+}
+
+package "api.models/ (24)" #B3D9FF {
+
+  class BoxQueryRequest {
+    + type : str
+    + category : str
+    + open : Optional[str]
+    + high : Optional[str]
+    + low : Optional[str]
+    + close : Optional[str]
+    + y : Optional[str]
+    + group_by : Optional[str]
+    + sort : Optional[SortSpec]
+    + filters : list[FilterSpec]
+    + page_filters : Optional[PageFilters]
+    + models : list[str]
+  }
+
+  class BucketSpec {
+    + size : Optional[float]
+    + edges : Optional[list[float]]
+    + count : Optional[int]
+  }
+
+  class ColumnTuple {
+    + key : str
+    + field : str
+    + aggregation : Optional[str]
+    + format : Optional[str]
+    + label : Optional[str]
+  }
+
+  class DimensionValuesResponse {
+    + field : str
+    + values : list[Any]
+  }
+
+  class ExpandableData {
+    + columns : list[dict[str, Any]]
+    + children : dict[str, list[list[Any]]]
+    + total_rows : int
+  }
+
+  class FilterSpec {
+    + model_config : {'populate_by_name': True}
+    + field : str
+    + operator : str
+    + value : Union[list, str, int, float, dict]
+  }
+
+  class GraphicalQueryRequest {
+    + type : str
+    + x : Optional[str]
+    + y : Optional[Union[str, list[str]]]
+    + group_by : Optional[str]
+    + size : Optional[str]
+    + color : Optional[str]
+    + labels : Optional[str]
+    + values : Optional[str]
+    + z : Optional[str]
+    + aggregation : Optional[str]
+    + sort : Optional[SortSpec]
+    + filters : list[FilterSpec]
+    + page_filters : Optional[PageFilters]
+    + models : list[str]
+  }
+
+  class GraphicalResponse {
+    + series : list[SeriesData]
+    + truncated : bool
+    + formatting : Optional[dict[str, Any]]
+  }
+
+  class GreatTablesResponse {
+    + html : str
+    + expandable : Optional[ExpandableData]
+  }
+
+  class HealthResponse {
+    + status : str
+    + version : str
+  }
+
+  class MeasureTuple {
+    + key : str
+    + field : Union[str, dict]
+    + aggregation : Optional[str]
+    + format : Optional[str]
+    + label : Optional[str]
+  }
+
+  class MetricQueryRequest {
+    + type : str
+    + metrics : list[MeasureTuple]
+    + filters : list[FilterSpec]
+    + page_filters : Optional[PageFilters]
+    + models : list[str]
+  }
+
+  class MetricResponse {
+    + metrics : list[MetricValue]
+  }
+
+  class MetricValue {
+    + key : str
+    + label : str
+    + value : Any
+    + format : Optional[str]
+  }
+
+  class PageFilters {
+    + ignore : list[str]
+  }
+
+  class PivotQueryRequest {
+    + type : str
+    + rows : Union[str, list[str]]
+    + cols : Optional[Union[str, list[str]]]
+    + layout : str
+    + measures : list[MeasureTuple]
+    + buckets : Optional[dict[str, BucketSpec]]
+    + windows : Optional[list[WindowSpec]]
+    + totals : Optional[TotalsSpec]
+    + sort : Optional[SortConfig]
+    + filters : list[FilterSpec]
+    + page_filters : Optional[PageFilters]
+    + models : list[str]
+    --
+    + row_fields()
+    + col_fields()
+  }
+
+  class SeriesData {
+    + name : str
+    + x : list
+    + y : list
+    + size : Optional[list]
+  }
+
+  class SortConfig {
+    + rows : Optional[SortSpec]
+    + cols : Optional[SortSpec]
+  }
+
+  class SortSpec {
+    + by : Optional[str]
+    + order : str
+    + values : Optional[list[str]]
+  }
+
+  class TableColumn {
+    + key : str
+    + label : str
+    + format : Optional[str]
+    + group : Optional[str]
+  }
+
+  class TableDataQueryRequest {
+    + type : str
+    + columns : list[ColumnTuple]
+    + sort_by : Optional[str]
+    + sort_order : str
+    + filters : list[FilterSpec]
+    + page_filters : Optional[PageFilters]
+    + models : list[str]
+  }
+
+  class TableResponse {
+    + columns : list[TableColumn]
+    + rows : list[list[Any]]
+    + truncated : bool
+    + formatting : Optional[dict[str, Any]]
+  }
+
+  class TotalsSpec {
+    + rows : bool
+    + cols : bool
+  }
+
+  class WindowSpec {
+    + key : str
+    + source : str
+    + type : str
+    + label : Optional[str]
+  }
+
+}
+
+package "config/ (44)" #FFCC66 {
+
+  class APIConfig {
+    + name : str
+    + base_url : str
+    + endpoints : Dict[str, Any]
+    + api_keys : List[str]
+    + rate_limit_calls : int
+    + rate_limit_period : int
+    + headers : Dict[str, str]
+    + timeout : int
+    --
+    + from_dict()
+  }
+
+  class AliasSpec {
+    + target_column : str
+    + expression : str
+    --
+    + from_list()
+  }
+
+  class ApiLimits {
+    + duckdb_memory_limit : str
+    + max_sql_rows : int
+    + max_dimension_values : int
+    + max_response_mb : float
+    --
+    + from_dict()
+  }
+
+  class AppConfig {
+    + repo_root : Path
+    + connection : ConnectionConfig
+    + storage : Dict[str, Any]
+    + apis : Dict[str, Dict[str, Any]]
+    + log_level : str
+    + debug : DebugConfig
+    + env_loaded : bool
+    --
+    + models_dir()
+    + legacy_models_dir()
+    + configs_dir()
+    - __post_init__()
+  }
+
+  class BaseTemplate {
+    + type : str
+    + model : str
+    + version : str
+    + description : str
+    + extends : Optional[str]
+    + canonical_fields : list[SchemaField]
+    + tables : dict[str, TableConfig]
+    + depends_on : list[str]
+    + source_file : Optional[str]
+  }
+
+  class BronzeConfig {
+    + table : str
+    + partitions : List[str]
+    + write_strategy : str
+    + key_columns : List[str]
+    + date_column : Optional[str]
+    + comment : str
+  }
+
+  class BuildSpec {
+    + sort_by : list[str]
+    + optimize : bool
+    + partitions : list[str]
+    + phases : dict[str, PhaseSpec]
+    + post_build : list[dict]
+    --
+    + from_dict()
+  }
+
+  class ClusterConfig {
+    + spark_master : str
+    + fallback_to_local : bool
+    + task_batch_size : int
+    --
+    + from_dict()
+  }
+
+  class ColoredFormatter {
+    + COLORS : {'DEBUG': '\x1b[36m', 'INFO': '\x1b[3...
+    + RESET : '\x1b[0m'
+    --
+    + format()
+    - __init__()
+    - _supports_color()
+  }
+
+  class ConfigLoader {
+    + load_env()
+    + load_storage()
+    + load()
+    + repo_root()
+    - __init__()
+    - _discover_repo_root()
+    - _get_api_keys()
+    - _load_json_config()
+    - _build_connection_config()
+    - _build_storage_config()
+    - _get_run_config_storage_path()
+    - _resolve_storage_paths()
+    - _inject_api_keys()
+    - _load_api_configs_from_markdown()
+  }
+
+  class ConnectionConfig {
+    + type : str
+    + spark : Optional[SparkConfig]
+    + duckdb : Optional[DuckDBConfig]
+    --
+    - __post_init__()
+  }
+
+  class DebugConfig {
+    + filters : bool
+    + exhibits : bool
+    + sql : bool
+    --
+    + from_env()
+  }
+
+  class DomainModelConfig {
+    + model : str
+    + version : str
+    + description : str
+    + extends : list[str]
+    + depends_on : list[str]
+    + status : str
+    + sources_from : Optional[str]
+    + storage : ModelStorageSpec
+    + graph : GraphSpec
+    + build : BuildSpec
+    + measures : MeasuresSpec
+    + hooks : HooksConfig
+    + ml_models : dict[str, MLModelSpec]
+    + metadata : dict
+    + tables : dict[str, TableConfig]
+    + sources : dict[str, SourceConfig]
+    + views : dict[str, Any]
+    + _raw : dict
+    + source_file : Optional[str]
+    --
+    + from_dict()
+  }
+
+  class DuckDBConfig {
+    + database_path : Path
+    + memory_limit : str
+    + threads : int
+    + read_only : bool
+    + additional_config : Dict[str, Any]
+    --
+    + to_connection_params()
+  }
+
+  class EdgeSpec {
+    + name : str
+    + from_table : str
+    + to_table : str
+    + join_keys : list[str]
+    + cardinality : str
+    + target_domain : Optional[str]
+    + optional : bool
+    --
+    + from_list()
+  }
+
+  class EndpointConfig {
+    + endpoint_id : str
+    + provider : str
+    + method : str
+    + endpoint_pattern : str
+    + format : str
+    + auth : str
+    + response_key : Optional[str]
+    + default_query : dict
+    + required_params : list[str]
+    + pagination_type : str
+    + bulk_download : bool
+    + download_method : str
+    + json_structure : str
+    + raw_schema : list[list]
+    + schema : list[EndpointSchemaField]
+    + bronze : Optional[str]
+    + partitions : list[str]
+    + write_strategy : str
+    + key_columns : list[str]
+    + date_column : Optional[str]
+    + domain : str
+    + data_tags : list[str]
+    + status : str
+    + update_cadence : str
+    + source_file : Optional[str]
+  }
+
+  class EndpointConfig_markdown_loader {
+    + endpoint_id : str
+    + provider : str
+    + method : str
+    + endpoint_pattern : str
+    + format : str
+    + auth : str
+    + response_key : Optional[str]
+    + default_query : Dict[str, Any]
+    + required_params : List[str]
+    + pagination_type : str
+    + schema : List[SchemaField]
+    + bronze : Optional[BronzeConfig]
+    + domain : str
+    + data_tags : List[str]
+    + status : str
+    + enabled : bool
+    + view_ids : Dict[str, str]
+    + download_method : str
+    + json_structure : str
+    + raw_schema : List[List[Any]]
+    + raw : Dict[str, Any]
+    --
+    + get_spark_raw_schema()
+  }
+
+  class EndpointSchemaField {
+    + name : str
+    + type : str
+    + source_field : str
+    + nullable : bool
+    + description : str
+    + transform : Optional[str]
+    + coerce : Optional[str]
+    + default : Optional[Any]
+  }
+
+  class EnrichSpec {
+    + from_table : str
+    + join : list[str]
+    + columns : list[str]
+  }
+
+  class GraphSpec {
+    + edges : list[EdgeSpec]
+    + paths : dict[str, Any]
+    --
+    + from_dict()
+  }
+
+  class HookDef {
+    + fn : str
+    + params : dict
+    --
+    + from_dict()
+  }
+
+  class HooksConfig {
+    + pre_build : list[HookDef]
+    + before_build : list[HookDef]
+    + after_build : list[HookDef]
+    + post_build : list[HookDef]
+    --
+    + from_dict()
+  }
+
+  class LogConfig {
+    + console_level : str
+    + file_level : str
+    + log_dir : Path
+    + log_file : str
+    + json_log_file : str
+    + max_bytes : int
+    + backup_count : int
+    + console_format : str
+    + file_format : str
+    + date_format : str
+    + enable_json : bool
+    + module_levels : Dict[str, str]
+    --
+    + from_env()
+  }
+
+  class LogTimer {
+    - __init__()
+    - __enter__()
+    - __exit__()
+  }
+
+  class MLModelSpec {
+    + name : str
+    + type : str
+    + target : list[str]
+    + features : list[str]
+    + lookback_days : int
+    + forecast_horizon : int
+    + parameters : dict
+    + retrain_if_stale_days : int
+    + enabled : bool
+    --
+    + from_dict()
+  }
+
+  class MarkdownConfigLoader {
+    + parse_frontmatter()
+    + parse_schema_block()
+    + parse_view_ids_table()
+    + parse_schema_array()
+    + parse_bronze_config()
+    + load_provider()
+    + load_endpoint()
+    + load_providers()
+    + load_endpoints()
+    + get_provider_config()
+    + get_bronze_configs()
+    + get_endpoint_schema()
+    + get_coercion_rules()
+    + get_field_mappings()
+    + get_computed_fields()
+    + clear_cache()
+    - __init__()
+  }
+
+  class MeasureDef {
+    + name : str
+    + aggregation : str
+    + field : str | dict
+    + label : str
+    + format : Optional[str]
+    + options : dict
+    --
+    + from_list()
+  }
+
+  class MeasuresSpec {
+    + simple : list[MeasureDef]
+    + computed : list[MeasureDef]
+    --
+    + from_dict()
+  }
+
+  class ModelStorageSpec {
+    + format : str
+    + silver_root : Optional[str]
+    --
+    + from_dict()
+  }
+
+  class PhaseSpec {
+    + tables : list[str]
+    --
+    + from_dict()
+  }
+
+  class PipelineStep {
+    + op : str
+    + fn : Optional[str]
+    + params : dict
+  }
+
+  class ProviderConfig {
+    + provider_id : str
+    + provider : str
+    + api_type : str
+    + base_url : str
+    + auth_model : str
+    + env_api_key : str
+    + rate_limit_per_sec : float
+    + default_headers : dict
+    + provider_settings : dict
+    + endpoints : list[str]
+    + models : list[str]
+    + category : str
+    + data_domains : list[str]
+    + data_tags : list[str]
+    + status : str
+    + source_file : Optional[str]
+  }
+
+  class ProviderConfig_markdown_loader {
+    + provider_id : str
+    + provider : str
+    + api_type : str
+    + base_url : str
+    + auth_model : str
+    + env_api_key : str
+    + rate_limit_per_sec : float
+    + default_headers : Dict[str, str]
+    + models : List[str]
+    + category : str
+    + data_domains : List[str]
+    + data_tags : List[str]
+    + status : str
+    + raw : Dict[str, Any]
+  }
+
+  class RetryConfig {
+    + max_retries : int
+    + retry_delay_seconds : float
+    + exponential_backoff : bool
+    --
+    + from_dict()
+  }
+
+  class RootsConfig {
+    + raw : str
+    + bronze : str
+    + silver : str
+    + models : str
+    --
+    + from_dict()
+  }
+
+  class RunConfig {
+    + defaults : dict
+    + providers : dict[str, dict]
+    + silver_models : list[str]
+    + cluster : ClusterConfig
+    + retry : RetryConfig
+    + profiles : dict[str, dict]
+    --
+    + from_dict()
+  }
+
+  class SchemaField {
+    + name : str
+    + type : str
+    + nullable : bool
+    + description : str
+    + derived : Optional[str]
+    + fk : Optional[str]
+    + format : Optional[str]
+    --
+    + from_list()
+  }
+
+  class SchemaField_markdown_loader {
+    + name : str
+    + type : str
+    + source : str
+    + nullable : bool
+    + description : str
+    + transform : Optional[str]
+    + coerce : Optional[str]
+    + expr : Optional[str]
+    + default : Optional[Any]
+    --
+    + is_computed()
+    + is_generated()
+  }
+
+  class SourceConfig {
+    + source : str
+    + maps_to : str
+    + from_ref : str
+    + aliases : list[AliasSpec]
+    + domain_source : Optional[str]
+    + filter : list[str]
+    + discriminator : Optional[str]
+    + extends : Optional[str]
+    + source_file : Optional[str]
+    --
+    + from_dict()
+  }
+
+  class SparkConfig {
+    + driver_memory : str
+    + executor_memory : str
+    + shuffle_partitions : int
+    + timezone : str
+    + legacy_time_parser : bool
+    + additional_config : Dict[str, Any]
+    --
+    + to_spark_conf_dict()
+  }
+
+  class StorageConfig {
+    + bronze_root : Path
+    + silver_root : Path
+    + tables : Dict[str, Dict[str, Any]]
+    --
+    + from_dict()
+  }
+
+  class StructuredFormatter {
+    + format()
+  }
+
+  class TableConfig {
+    + table : str
+    + table_type : str
+    + schema : list[SchemaField]
+    + primary_key : list[str]
+    + unique_key : list[str]
+    + partition_by : list[str]
+    + measures : list[MeasureDef]
+    + enrich : list[EnrichSpec]
+    + pipeline : list[PipelineStep]
+    + extends : Optional[str]
+    + source_file : Optional[str]
+    --
+    + from_dict()
+  }
+
+  class TablePath {
+    + root : str
+    + rel : str
+    + partitions : list[str]
+    --
+    + full_path()
+    + from_dict()
+  }
+
+}
+
+package "config.domain/ (1)" #FFCC66 {
+
+  class DomainConfigLoader {
+    + load_model_config()
+    + list_models()
+    + get_dependencies()
+    + get_build_order()
+    + load_base()
+    + clear_cache()
+    - __init__()
+    - _build_index()
+    - _discover_tables()
+    - _discover_sources()
+    - _discover_views()
+    - _get_parsed()
+    - _assemble_model()
+  }
+
+}
+
+package "core/ (48)" #80E0D0 {
+
+  class ArtifactStore {
+    + save()
+    + load()
+    + latest()
+    + list_versions()
+    + register()
+    - __init__()
+  }
+
+  class BuildSession {
+    + get_model()
+    + get_dependencies()
+    + build()
+    + build_all()
+    + close()
+    - __init__()
+    - _topological_sort()
+  }
+
+  class ConfigurationError {
+    Error in configuration loading or validation.
+  }
+
+  class ConnectionError {
+    - __init__()
+  }
+
+  class ConnectionFactory {
+    + create()
+  }
+
+  class DataConnection {
+    + read_table()
+    + apply_filters()
+    + to_pandas()
+    + count()
+    + cache()
+    + uncache()
+    + stop()
+  }
+
+  class DataNotFoundError {
+    - __init__()
+  }
+
+  class DataOps {
+    + read()
+    + write()
+    + create_df()
+    + select()
+    + drop()
+    + derive()
+    + filter()
+    + dedup()
+    + join()
+    + union()
+    + unpivot()
+    + window()
+    + pivot()
+    + aggregate()
+    + count()
+    + to_pandas()
+    + columns()
+  }
+
+  class DeFunkError {
+    - __init__()
+    - __str__()
+    - __repr__()
+  }
+
+  class DependencyError {
+    - __init__()
+  }
+
+  class DomainGraph {
+    + find_join_path()
+    + reachable_domains()
+    + neighbors()
+    + domains_for_table()
+    + all_tables()
+    + all_edges()
+    + distance()
+    + connected_components()
+    + subgraph()
+    - __init__()
+    - _build_from_models()
+    - _register_edge()
+  }
+
+  class DuckDBConnection {
+    + table()
+    + has_view()
+    + read_table()
+    + write_delta_table()
+    + get_delta_table_history()
+    + optimize_delta_table()
+    + vacuum_delta_table()
+    + read_parquet()
+    + createDataFrame()
+    + apply_filters()
+    + to_pandas()
+    + count()
+    + cache()
+    + uncache()
+    + stop()
+    + execute_sql()
+    + execute()
+    - __init__()
+    - _enable_delta_extension()
+    - _init_model_views()
+    - _is_delta_table()
+    - _read_delta_table()
+    - _merge_delta_table()
+    - __del__()
+  }
+
+  class DuckDBOps {
+    + read()
+    + write()
+    + create_df()
+    + select()
+    + drop()
+    + derive()
+    + filter()
+    + dedup()
+    + join()
+    + union()
+    + unpivot()
+    + window()
+    + pivot()
+    + aggregate()
+    + count()
+    + to_pandas()
+    + columns()
+    - __init__()
+    - _scan_expr()
+  }
+
+  class DuckDBSql {
+    + execute_sql()
+    + scan()
+    + build_from()
+    + build_where()
+    + distinct_values()
+    - __init__()
+    - _resolve_intermediate_path()
+  }
+
+  class Engine {
+    + for_duckdb()
+    + for_spark()
+    + read()
+    + write()
+    + create_df()
+    + select()
+    + drop()
+    + derive()
+    + filter()
+    + dedup()
+    + join()
+    + union()
+    + unpivot()
+    + window()
+    + pivot()
+    + aggregate()
+    + count()
+    + to_pandas()
+    + columns()
+    + execute_sql()
+    + scan()
+    + build_from()
+    + build_where()
+    + distinct_values()
+    + distinct_values_by_measure()
+    + get_query_engine()
+    + get_handler_registry()
+    - __init__()
+    - __repr__()
+  }
+
+  class ErrorContext {
+    - __init__()
+    - __enter__()
+    - __exit__()
+  }
+
+  class FilterError {
+    - __init__()
+  }
+
+  class ForecastError {
+    Error in forecasting operations.
+  }
+
+  class HookRunner {
+    + run()
+    + has_hooks()
+    + list_hooks()
+    - __init__()
+  }
+
+  class IngestSession {
+    + get_provider()
+    + get_endpoint()
+    + close()
+    - __init__()
+  }
+
+  class IngestionError {
+    - __init__()
+  }
+
+  class InsufficientDataError {
+    - __init__()
+  }
+
+  class InvalidConfigError {
+    - __init__()
+  }
+
+  class JoinError {
+    - __init__()
+  }
+
+  class MeasureError {
+    - __init__()
+  }
+
+  class MissingConfigError {
+    - __init__()
+  }
+
+  class ModelArtifact {
+    + model_name : str
+    + version : str
+    + trained_at : str
+    + artifact_path : str
+    + metrics : dict
+    + config : dict
+    + status : str
+    --
+    + to_dict()
+    + from_dict()
+    - __post_init__()
+  }
+
+  class ModelError {
+    Error in model operations.
+  }
+
+  class ModelNotFoundError {
+    - __init__()
+  }
+
+  class ModelTrainingError {
+    - __init__()
+  }
+
+  class NodeExecutor {
+    + register_op()
+    + get_op()
+    + list_ops()
+    + execute_all()
+    + execute_node()
+    + execute_pipeline()
+    - __init__()
+    - _register_builtins()
+    - _load_source()
+    - _load_from_node()
+    - _load_bronze()
+    - _load_silver()
+    - _op_filter()
+    - _op_join()
+    - _op_select()
+    - _op_derive()
+    - _op_dedup()
+    - _op_drop()
+    - _op_enrich()
+    - _op_window()
+    - _op_unpivot()
+    - _op_pivot()
+    - _op_aggregate()
+    - _op_hook()
+    - _import_fn()
+    - _build_seed()
+    - _build_union()
+    - _build_distinct()
+    - _build_generated()
+  }
+
+  class NotebookValidator {
+    + validate()
+    + validate_and_raise()
+    + get_warnings()
+    + get_errors()
+    + is_valid()
+    - __init__()
+    - _validate_models()
+    - _validate_exhibit()
+    - _validate_filters()
+    - _parse_source()
+  }
+
+  class PipelineError {
+    Error in data pipeline execution.
+  }
+
+  class QueryError {
+    Error executing a query.
+  }
+
+  class QuerySession {
+    + resolve()
+    + find_join_path()
+    + distinct_values()
+    + build_from()
+    + build_where()
+    + close()
+    - __init__()
+  }
+
+  class RateLimitError {
+    - __init__()
+  }
+
+  class RepoContext {
+    + repo : Path
+    + spark : Any
+    + storage : Dict[str, Any]
+    + connection : Optional[Any]
+    + connection_type : str
+    + _config : Optional[AppConfig]
+    --
+    + get_api_config()
+    + from_repo_root()
+    + config()
+  }
+
+  class Session {
+    + raw_path()
+    + bronze_path()
+    + silver_path()
+    + model_path()
+    + close()
+    - __init__()
+  }
+
+  class SparkConnection {
+    + read_table()
+    + write_delta_table()
+    + merge_delta_table()
+    + optimize_delta_table()
+    + vacuum_delta_table()
+    + get_delta_table_history()
+    + apply_filters()
+    + to_pandas()
+    + count()
+    + cache()
+    + uncache()
+    + stop()
+    - __init__()
+    - _is_delta_table()
+  }
+
+  class SparkOps {
+    + read()
+    + write()
+    + create_df()
+    + select()
+    + drop()
+    + derive()
+    + filter()
+    + dedup()
+    + join()
+    + union()
+    + unpivot()
+    + window()
+    + pivot()
+    + aggregate()
+    + count()
+    + to_pandas()
+    + columns()
+    - __init__()
+  }
+
+  class SparkSql {
+    + execute_sql()
+    + scan()
+    + build_from()
+    + build_where()
+    + distinct_values()
+    - __init__()
+  }
+
+  class SqlOps {
+    + execute_sql()
+    + scan()
+    + build_from()
+    + build_where()
+    + distinct_values()
+  }
+
+  class StorageError {
+    Error in storage operations.
+  }
+
+  class StorageRouter {
+    + raw_path()
+    + bronze_path()
+    + silver_path()
+    + model_path()
+    + resolve()
+    + silver_root()
+    + bronze_root()
+    + raw_root()
+    + models_root()
+    - __init__()
+  }
+
+  class TableNotFoundError {
+    - __init__()
+  }
+
+  class TransformationError {
+    - __init__()
+  }
+
+  class ValidationError {
+    + level : str
+    + message : str
+    + location : Optional[str]
+  }
+
+  class WriteError {
+    - __init__()
+  }
+
+}
+
+package "core.session/ (1)" #80E0D0 {
+
+  class FilterEngine {
+    + apply_filters()
+    + apply_from_session()
+    + build_filter_sql()
+    - _convert_date_to_date_id()
+    - _format_sql_value()
+    - _apply_spark_filters()
+    - _apply_duckdb_filters()
+  }
+
+}
+
+package "models.base/ (14)" #FF9933 {
+
+  class BaseModel {
+    + backend()
+    + build()
+    + ensure_built()
+    + write_tables()
+    + get_table()
+    + has_table()
+    + list_tables()
+    + before_build()
+    + after_build()
+    + custom_node_loading()
+    + set_session()
+    - __init__()
+    - _apply_filters()
+    - _select_columns()
+    - _run_hooks()
+    - _build_window_node()
+  }
+
+  class BaseModelBuilder {
+    + model_name : str
+    + depends_on : List[str]
+    --
+    + get_model_class()
+    + get_model_config()
+    + build()
+    + get_dependencies()
+    - __init__()
+  }
+
+  class BuildPlan {
+    + model_name : str
+    + nodes : dict[str, NodeSpec]
+    + phase_order : list[list[str]]
+    + sources_by_target : dict[str, list]
+    + partitions : list[str]
+    + sort_by : list[str]
+    + optimize : bool
+    --
+    + node_ids_in_order()
+    + to_translated_dict()
+  }
+
+  class BuildPlanner {
+    + plan()
+  }
+
+  class BuildResult {
+    + model_name : str
+    + success : bool
+    + dimensions : int
+    + facts : int
+    + rows_written : int
+    + duration_seconds : float
+    + error : Optional[str]
+    + warnings : List[str]
+    --
+    - __str__()
+  }
+
+  class BuilderRegistry {
+    + _builders : Dict[str, Type[BaseModelBuilder]]
+    --
+    + register()
+    + all()
+    + discover()
+    + clear()
+  }
+
+  class DataValidator {
+    + columns()
+    + row_count()
+    + get_required_columns()
+    + get_numeric_columns()
+    + get_date_column()
+    + get_entity_column()
+    + get_optional_columns()
+    + get_valid_ranges()
+    + get_min_rows()
+    + get_null_thresholds()
+    + validate()
+    - __init__()
+    - _detect_backend()
+    - _validate_columns()
+    - _validate_row_count()
+    - _validate_data_types()
+    - _validate_ranges()
+    - _validate_nulls()
+    - _validate_time_series()
+    - _collect_metrics()
+  }
+
+  class DomainBuilderFactory {
+    + create_builders()
+    - _create_builder_class()
+  }
+
+  class DomainModel {
+    + custom_node_loading()
+    + graph_builder()
+    - __init__()
+    - _build_seed_node()
+    - _build_union_node()
+    - _load_internal_or_bronze()
+    - _build_distinct_node()
+    - _apply_distinct_enrichments()
+    - _build_window_node()
+    - _build_unpivot_node()
+    - _create_empty_df()
+    - _seed_to_spark_df()
+    - _seed_to_duckdb_df()
+    - _apply_seed_derived_columns()
+    - _apply_derive()
+    - _apply_unpivot()
+  }
+
+  class GraphBuilder {
+    + model_cfg()
+    + build()
+    - __init__()
+    - _build_nodes()
+    - _load_bronze_table()
+    - _load_silver_table()
+    - _apply_derive()
+    - _translate_node_config()
+  }
+
+  class JoinSpec {
+    + right_table : str
+    + on : list[str]
+    + how : str
+  }
+
+  class NodeSpec {
+    + node_id : str
+    + node_type : str
+    + from_ref : str
+    + select : dict[str, str]
+    + derive : dict[str, str]
+    + filters : list[str]
+    + joins : list[JoinSpec]
+    + dedup_keys : list[str]
+    + drop_cols : list[str]
+    + seed_data : list[list]
+    + seed_schema : list
+    + union_sources : list[dict]
+    + window_source : str
+    + window_schema : list
+    + window_partition : str
+    + window_order : str
+    + group_by : list[str]
+    + aggregate_exprs : dict
+    + unpivot_plan : dict
+    + enrich_specs : list[dict]
+    + _raw : dict
+    --
+    + to_dict()
+  }
+
+  class ValidationIssue {
+    + level : str
+    + category : str
+    + message : str
+    + details : Dict[str, Any]
+    --
+    - __str__()
+  }
+
+  class ValidationReport {
+    + validator_name : str
+    + timestamp : datetime
+    + issues : List[ValidationIssue]
+    + metrics : Dict[str, Any]
+    --
+    + is_valid()
+    + error_count()
+    + warning_count()
+    + add_error()
+    + add_warning()
+    + add_info()
+    + summary()
+  }
+
+}
+
+package "orchestration/ (5)" #CC99FF {
+
+  class CheckpointManager {
+    + DEFAULT_CHECKPOINT_DIR : 'storage/checkpoints'
+    --
+    + create_checkpoint()
+    + load_checkpoint()
+    + find_latest_checkpoint()
+    + find_resumable_checkpoint()
+    + mark_ticker_started()
+    + mark_ticker_completed()
+    + mark_ticker_failed()
+    + get_pending_tickers()
+    + get_failed_tickers()
+    + mark_pipeline_completed()
+    + mark_pipeline_failed()
+    + get_progress()
+    + clear_checkpoint()
+    + list_checkpoints()
+    - __init__()
+    - _get_checkpoint_path()
+    - _save_checkpoint()
+    - _maybe_save()
+  }
+
+  class DependencyGraph {
+    + build()
+    + get_dependencies()
+    + topological_sort()
+    + filter_buildable()
+    + get_dependents()
+    + visualize()
+    + get_tiers()
+    + list_models()
+    + get_model_info()
+    + validate()
+    - __init__()
+    - _discover_models()
+    - _load_model_yaml()
+    - _build_edges()
+    - _get_deps_recursive()
+    - _topo_sort_simple()
+  }
+
+  class ModelInfo {
+    + name : str
+    + version : str
+    + depends_on : List[str]
+    + inherits_from : Optional[str]
+    + storage_root : str
+    + enabled : bool
+  }
+
+  class PipelineCheckpoint {
+    + pipeline_id : str
+    + pipeline_name : str
+    + started_at : str
+    + last_updated : str
+    + status : str
+    + total_tickers : int
+    + processed_count : int
+    + failed_count : int
+    + tickers : Dict[str, TickerCheckpoint]
+    + metadata : Dict[str, Any]
+    --
+    + to_dict()
+    + from_dict()
+  }
+
+  class TickerCheckpoint {
+    + ticker : str
+    + status : str
+    + started_at : Optional[str]
+    + completed_at : Optional[str]
+    + error : Optional[str]
+    + retries : int
+    + data_endpoints : Dict[str, str]
+    --
+    + to_dict()
+    + from_dict()
+  }
+
+}
+
+package "pipelines.base/ (15)" #CC9966 {
+
+  class ApiKeyPool {
+    + size()
+    + next_key()
+    + mark_exhausted()
+    - __init__()
+  }
+
+  class BaseProvider {
+    + PROVIDER_NAME : str
+    --
+    + base_url()
+    + rate_limit()
+    + env_api_key()
+    + get_provider_setting()
+    + get_endpoint_config()
+    + list_work_items()
+    + fetch()
+    + normalize()
+    + get_table_name()
+    + get_partitions()
+    + get_key_columns()
+    + get_write_strategy()
+    + get_date_column()
+    + get_response_key()
+    + get_field_mappings()
+    + get_type_coercions()
+    - __init__()
+    - _load_config_from_markdown()
+    - _setup()
+  }
+
+  class BaseRegistry {
+    + render()
+    - __init__()
+  }
+
+  class DataType {
+    + REFERENCE : 'reference'
+    + PRICES : 'prices'
+    + INCOME_STATEMENT : 'income'
+    + BALANCE_SHEET : 'balance'
+    + CASH_FLOW : 'cashflow'
+    + EARNINGS : 'earnings'
+    + OPTIONS : 'options'
+    + ETF_PROFILE : 'etf_profile'
+    + DIVIDENDS : 'dividends'
+    + SPLITS : 'splits'
+  }
+
+  class Endpoint {
+    + name : str
+    + base : str
+    + method : str
+    + path_template : str
+    + required_params : list
+    + default_query : dict
+    + response_key : str
+  }
+
+  class Facet {
+    + NUMERIC_COERCE : Dict[str, str]
+    + SPARK_CASTS : Dict[str, str]
+    + FINAL_COLUMNS : Optional[List[Tuple[str, str]]]
+    + PROVIDER_ID : Optional[str]
+    + ENDPOINT_ID : Optional[str]
+    --
+    + get_coerce_rules()
+    + get_spark_casts()
+    + get_final_columns()
+    + get_field_mappings()
+    + get_computed_fields()
+    + get_facet_config()
+    + normalize()
+    + postprocess()
+    + validate()
+    + calls()
+    - __init__()
+    - _load_markdown_schema()
+    - _clean_raw_value()
+    - _clean_raw_row()
+    - _clean_raw_batches()
+    - _coerce_rows()
+    - _apply_spark_casts()
+    - _apply_final_columns()
+    - _apply_computed_fields()
+    - _empty_df()
+  }
+
+  class FetchResult {
+    + ticker : str
+    + data_type : DataType
+    + success : bool
+    + data : Optional[Any]
+    + error : Optional[str]
+    + api_calls : int
+    --
+    - __bool__()
+  }
+
+  class HttpClient {
+    + request_text()
+    + request()
+    + get()
+    - __init__()
+    - _effective_min_interval()
+    - _throttle()
+    - _build_request()
+  }
+
+  class IngestionResults {
+    + work_items : List[str]
+    + total_work_items : int
+    + completed_work_items : int
+    + total_records : int
+    + total_errors : int
+    + results : Dict[str, WorkItemResult]
+    + elapsed_seconds : float
+    --
+    + add_result()
+    + summary()
+    + print_summary()
+  }
+
+  class IngestorEngine {
+    + _executor : Optional[ThreadPoolExecutor]
+    + _executor_lock : threading.Lock()
+    --
+    + from_session()
+    + get_executor()
+    + shutdown_executor()
+    + run()
+    + run_with_discovery()
+    - __init__()
+    - _wait_for_pending_writes()
+    - _cleanup_spark_memory()
+    - _save_raw()
+    - _archive_raw()
+    - _async_write()
+    - _ingest_bulk_from_raw()
+    - _ingest_work_item_async()
+    - _validate_partitions()
+    - _ingest_work_item_sync()
+  }
+
+  class SocrataBaseProvider {
+    + enable_raw_save()
+    + list_work_items()
+    + fetch()
+    + normalize()
+    + get_table_name()
+    + get_resource_id()
+    + list_endpoints()
+    + read_csv_with_spark()
+    + get_raw_path()
+    + read_raw_as_df()
+    + download_all_csv()
+    - __init__()
+    - _setup()
+    - _fetch_single_resource()
+    - _fetch_multi_year()
+    - _get_raw_path()
+    - _cleanup_raw_file()
+    - _get_resource_id()
+    - _safe_parse_date()
+    - _safe_parse_timestamp()
+    - _create_dataframe()
+    - _apply_schema_types()
+    - _normalize_column_name()
+  }
+
+  class SocrataClient {
+    + DEFAULT_LIMIT : 50000
+    + MAX_RETRIES : 6
+    + DEFAULT_TIMEOUT : 300
+    --
+    + request()
+    + fetch_all()
+    + fetch_all_flat()
+    + get_row_count()
+    + get_metadata()
+    + fetch_csv()
+    + download_csv_to_file()
+    + fetch_csv_from_file()
+    - __init__()
+    - _throttle()
+    - _build_url()
+    - _download_csv_gzip()
+  }
+
+  class SparkNormalizer {
+    + normalize()
+    + normalize_with_schema()
+    - __init__()
+    - _apply_field_mappings()
+    - _apply_type_coercions()
+    - _parse_dates()
+    - _parse_timestamps()
+    - _apply_computed_columns()
+    - _add_metadata()
+    - _select_final_columns()
+  }
+
+  class WorkItemResult {
+    + work_item : str
+    + success : bool
+    + record_count : int
+    + error : Optional[str]
+    + table_path : Optional[str]
+  }
+
+  class WriteTask {
+    + df : Any
+    + table_name : str
+    + partitions : Optional[List[str]]
+    + record_count : int
+    + work_item : str
+  }
+
+}
+
+package "pipelines.ingestors/ (3)" #CC9966 {
+
+  class BronzeSink {
+    + exists()
+    + write_if_missing()
+    + append_immutable()
+    + upsert()
+    + smart_write()
+    + write()
+    + overwrite()
+    + append()
+    + streaming_writer()
+    + rebuild_from_raw()
+    - __init__()
+    - _table_cfg()
+    - _path()
+    - _is_delta_table()
+    - _resolve_key_columns()
+    - _cleanup_old_files()
+    - _write_delta()
+  }
+
+  class RawSink {
+    + write()
+    + exists()
+    + read()
+    - __init__()
+  }
+
+  class StreamingBronzeWriter {
+    + add_records()
+    + add_batch()
+    + flush()
+    + total_records()
+    + buffered_records()
+    + batches_written()
+    - __init__()
+    - __enter__()
+    - __exit__()
+  }
+
+}
+
+package "pipelines.providers/ (2)" #CC9966 {
+
+  class ProviderInfo {
+    + name : str
+    + description : str
+    + version : str
+    + models : List[str]
+    + bronze_tables : List[str]
+    + config_key : str
+    + module_path : str
+    + class_name : str
+    + tags : List[str]
+    + enabled : bool
+    --
+    + to_dict()
+  }
+
+  class ProviderRegistry {
+    + _providers : Dict[str, ProviderInfo]
+    + _discovered : bool
+    + _providers_dir : Path
+    --
+    + discover()
+    + list_available()
+    + get_info()
+    + get_ingestor()
+    + get_all_info()
+    + get_providers_for_model()
+    + get_providers_by_tag()
+    + register()
+    + reset()
+    - _load_provider_yaml()
+    - _load_provider_convention()
+    - _pascal_case()
+  }
+
+}
+
+package "pipelines.providers.alpha_vantage/ (2)" #CC9966 {
+
+  class AlphaVantageProvider {
+    + PROVIDER_NAME : 'Alpha Vantage'
+    --
+    + enable_raw_save()
+    + has_raw_data()
+    + set_tickers()
+    + list_work_items()
+    + populate_raw_cache()
+    + fetch()
+    + normalize()
+    + get_table_name()
+    + get_partitions()
+    + get_key_columns()
+    + get_raw_path()
+    + read_raw_as_df()
+    + discover_tickers()
+    + get_tickers_by_market_cap()
+    + seed_tickers()
+    - __init__()
+    - _setup()
+    - _get_raw_path()
+    - _save_raw_response()
+    - _load_raw_response()
+    - _read_nested_map_json()
+    - _read_object_json()
+    - _read_array_json()
+    - _read_array_reports_json()
+    - _normalize_spark_df()
+    - _get_field_mappings_for_endpoint()
+    - _get_type_coercions_for_endpoint()
+    - _get_date_columns_for_endpoint()
+    - _get_data_type()
+    - _get_response_key()
+    - _convert_to_records()
+    - _normalize_prices()
+    - _normalize_reference()
+    - _normalize_financials()
+    - _normalize_corporate_actions()
+    - _fetch_single()
+  }
+
+  class AlphaVantageRegistry {
+    + render()
+    - __init__()
+  }
+
+}
+
+package "utils/ (2)" #E6E6E6 {
+
+  class APIValidator {
+    + validate_date_range()
+    + test_api_connection()
+    + get_recommended_date_range()
+    + prompt_user_for_adjusted_range()
+    - __init__()
+    - _suggest_adjusted_range()
+  }
+
+  class PipelineRunTracker {
+    + start_run()
+    + log_stage()
+    + log_error()
+    + log_warning()
+    + update_results()
+    + end_run()
+    + get_recent_runs()
+    + print_recent_runs()
+    - __init__()
+    - _save_run()
+    - _update_summary_log()
+  }
+
+}
+
+BaseModel <|-- DomainModel
+BaseProvider <|-- AlphaVantageProvider
+BaseProvider <|-- SocrataBaseProvider
+BaseRegistry <|-- AlphaVantageRegistry
+ConfigurationError <|-- InvalidConfigError
+ConfigurationError <|-- MissingConfigError
+DataConnection <|-- DuckDBConnection
+DataConnection <|-- SparkConnection
+DataOps <|-- DuckDBOps
+DataOps <|-- SparkOps
+DeFunkError <|-- ConfigurationError
+DeFunkError <|-- ConnectionError
+DeFunkError <|-- ForecastError
+DeFunkError <|-- ModelError
+DeFunkError <|-- PipelineError
+DeFunkError <|-- QueryError
+DeFunkError <|-- StorageError
+ExhibitHandler <|-- BoxHandler
+ExhibitHandler <|-- GraphicalHandler
+ExhibitHandler <|-- MetricsHandler
+ExhibitHandler <|-- PivotHandler
+ExhibitHandler <|-- TableDataHandler
+ForecastError <|-- InsufficientDataError
+ForecastError <|-- ModelTrainingError
+ModelError <|-- DependencyError
+ModelError <|-- MeasureError
+ModelError <|-- ModelNotFoundError
+ModelError <|-- TableNotFoundError
+PipelineError <|-- IngestionError
+PipelineError <|-- RateLimitError
+PipelineError <|-- TransformationError
+QueryError <|-- FilterError
+QueryError <|-- JoinError
+Session <|-- BuildSession
+Session <|-- IngestSession
+Session <|-- QuerySession
+SqlOps <|-- DuckDBSql
+SqlOps <|-- SparkSql
+StorageError <|-- DataNotFoundError
+StorageError <|-- WriteError
+
+AppConfig *-- ConnectionConfig : connection
+AppConfig *-- DebugConfig : debug
+BaseTemplate *-- SchemaField : canonical_fields
+BaseTemplate *-- TableConfig : tables
+BoxQueryRequest *-- FilterSpec : filters
+BoxQueryRequest *-- PageFilters : page_filters
+BoxQueryRequest *-- SortSpec : sort
+BuildPlan *-- NodeSpec : nodes
+BuildSpec *-- PhaseSpec : phases
+BuilderRegistry *-- BaseModelBuilder : _builders
+ConnectionConfig *-- DuckDBConfig : duckdb
+ConnectionConfig *-- SparkConfig : spark
+DomainModelConfig *-- BuildSpec : build
+DomainModelConfig *-- GraphSpec : graph
+DomainModelConfig *-- HooksConfig : hooks
+DomainModelConfig *-- MLModelSpec : ml_models
+DomainModelConfig *-- MeasuresSpec : measures
+DomainModelConfig *-- ModelStorageSpec : storage
+DomainModelConfig *-- SourceConfig : sources
+DomainModelConfig *-- TableConfig : tables
+EndpointConfig *-- BronzeConfig : bronze
+EndpointConfig *-- EndpointSchemaField : schema
+EndpointConfig *-- SchemaField : schema
+FetchResult *-- DataType : data_type
+GraphSpec *-- EdgeSpec : edges
+GraphicalQueryRequest *-- FilterSpec : filters
+GraphicalQueryRequest *-- PageFilters : page_filters
+GraphicalQueryRequest *-- SortSpec : sort
+GraphicalResponse *-- SeriesData : series
+GreatTablesResponse *-- ExpandableData : expandable
+HooksConfig *-- HookDef : after_build
+HooksConfig *-- HookDef : before_build
+HooksConfig *-- HookDef : post_build
+HooksConfig *-- HookDef : pre_build
+IngestionResults *-- WorkItemResult : results
+MeasuresSpec *-- MeasureDef : computed
+MeasuresSpec *-- MeasureDef : simple
+MetricQueryRequest *-- FilterSpec : filters
+MetricQueryRequest *-- MeasureTuple : metrics
+MetricQueryRequest *-- PageFilters : page_filters
+MetricResponse *-- MetricValue : metrics
+NodeSpec *-- JoinSpec : joins
+PipelineCheckpoint *-- TickerCheckpoint : tickers
+PivotQueryRequest *-- BucketSpec : buckets
+PivotQueryRequest *-- FilterSpec : filters
+PivotQueryRequest *-- MeasureTuple : measures
+PivotQueryRequest *-- PageFilters : page_filters
+PivotQueryRequest *-- SortConfig : sort
+PivotQueryRequest *-- TotalsSpec : totals
+PivotQueryRequest *-- WindowSpec : windows
+ProviderRegistry *-- ProviderInfo : _providers
+RepoContext *-- AppConfig : _config
+RunConfig *-- ClusterConfig : cluster
+RunConfig *-- RetryConfig : retry
+SortConfig *-- SortSpec : cols
+SortConfig *-- SortSpec : rows
+SourceConfig *-- AliasSpec : aliases
+TableConfig *-- EnrichSpec : enrich
+TableConfig *-- MeasureDef : measures
+TableConfig *-- PipelineStep : pipeline
+TableConfig *-- SchemaField : schema
+TableDataQueryRequest *-- ColumnTuple : columns
+TableDataQueryRequest *-- FilterSpec : filters
+TableDataQueryRequest *-- PageFilters : page_filters
+TableResponse *-- TableColumn : columns
+ValidationReport *-- ValidationIssue : issues
+
+AlphaVantageProvider ..> SparkNormalizer : _normalize_spark_df()
+AlphaVantageProvider ..> SparkNormalizer : normalize()
+BaseModel ..> HookRunner : _run_hooks()
+BaseModelBuilder ..> ConfigurationError : build()
+BaseModelBuilder ..> ErrorContext : build()
+BaseModelBuilder ..> ModelError : build()
+BaseModelBuilder ..> StorageError : build()
+BuildSession ..> BuildResult : build()
+BuildSession ..> DomainBuilderFactory : build()
+DeFunk ..> BuildSession : build_session()
+DeFunk ..> ConfigLoader : from_config()
+DeFunk ..> FieldResolver : query_session()
+DeFunk ..> IngestSession : ingest_session()
+DeFunk ..> QuerySession : query_session()
+DomainBuilderFactory ..> DomainConfigLoader : _create_builder_class()
+DomainBuilderFactory ..> DomainConfigLoader : create_builders()
+DomainModel ..> HookRunner : custom_node_loading()
+Engine ..> ExhibitHandler : distinct_values_by_measure()
+GraphBuilder ..> NodeExecutor : _build_nodes()
+IngestorEngine ..> RawSink : __init__()
+IngestorEngine ..> StorageRouter : __init__()
+
+
+' ══════════════════════════════════════════════
+' OBSIDIAN PLUGIN (TypeScript)
+' ══════════════════════════════════════════════
+
+package "obsidian-plugin/src/ (6)" #99CCFF {
+
+  class ApiClient <<typescript>> {
+    + constructor()
+    + headers()
+    + if()
+    + cacheKey()
+    + toCache()
+    + if()
+  }
+
+  class FilterSpec <<typescript>> {
+  }
+
+  class PageFilters <<typescript>> {
+  }
+
+  class SortSpec <<typescript>> {
+  }
+
+  class MeasureTuple <<typescript>> {
+  }
+
+  class ColumnTuple <<typescript>> {
+  }
+
+  class BlockData <<typescript>> {
+  }
+
+  class BlockFormatting <<typescript>> {
+  }
+
+  class BlockConfig <<typescript>> {
+  }
+
+  class DeFunkBlock <<typescript>> {
+  }
+
+  class SeriesData <<typescript>> {
+  }
+
+  class GraphicalResponse <<typescript>> {
+  }
+
+  class TableColumn <<typescript>> {
+  }
+
+  class TableResponse <<typescript>> {
+  }
+
+  class ExpandableData <<typescript>> {
+  }
+
+  class GreatTablesResponse <<typescript>> {
+  }
+
+  class MetricValue <<typescript>> {
+  }
+
+  class MetricResponse <<typescript>> {
+  }
+
+  class DimensionValuesResponse <<typescript>> {
+  }
+
+  class subscribeToFilterChanges <<function>> {
+    + subscribeToFilterChanges()
+  }
+
+  class notifyFilterChanged <<function>> {
+    + notifyFilterChanged()
+  }
+
+  class notifyControlChanged <<function>> {
+    + notifyControlChanged()
+  }
+
+  class FilterSidebar <<typescript>> {
+    + getViewType()
+    + getDisplayText()
+    + getIcon()
+    + updateFrontmatter()
+    + refreshContextFilters()
+    + for()
+  }
+
+  class NoteFilter <<typescript>> {
+    + if()
+    + parseFrontmatter()
+    + if()
+    + if()
+    + if()
+    + for()
+  }
+
+  class MeasureDef <<typescript>> {
+    + if()
+    + parseFrontmatter()
+    + if()
+    + if()
+    + if()
+    + for()
+  }
+
+  class ControlDef <<typescript>> {
+    + if()
+    + parseFrontmatter()
+    + if()
+    + if()
+    + if()
+    + for()
+  }
+
+  class NoteFrontmatter <<typescript>> {
+    + if()
+    + parseFrontmatter()
+    + if()
+    + if()
+    + if()
+    + for()
+  }
+
+  class parseMeasureDef <<function>> {
+    + parseMeasureDef()
+  }
+
+  class parseFrontmatter <<function>> {
+    + parseFrontmatter()
+  }
+
+  class filtersToSpecs <<function>> {
+    + filtersToSpecs()
+  }
+
+  class parseBlock <<function>> {
+    + parseBlock()
+  }
+
+  class buildRequest <<function>> {
+    + buildRequest()
+  }
+
+  class DeFunkSettings <<typescript>> {
+    + constructor()
+    + display()
+  }
+
+  class DeFunkSettingTab <<typescript>> {
+    + constructor()
+    + display()
+  }
+
+}
+
+package "obsidian-plugin/src/processors/ (3)" #99CCFF {
+
+  class renderConfigPanel <<function>> {
+    + renderConfigPanel()
+  }
+
+  class registerPanel <<function>> {
+    + registerPanel()
+  }
+
+  class subscribe <<function>> {
+    + subscribe()
+  }
+
+  class updateControl <<function>> {
+    + updateControl()
+  }
+
+  class createBlockProcessor <<function>> {
+    + createBlockProcessor()
+  }
+
+}
+
+package "obsidian-plugin/src/render/ (7)" #99CCFF {
+
+  class renderAgGrid <<function>> {
+    + renderAgGrid()
+  }
+
+  class renderAgGridPivot <<function>> {
+    + renderAgGridPivot()
+  }
+
+  class formatValue <<function>> {
+    + formatValue()
+  }
+
+  class renderGraphical <<function>> {
+    + renderGraphical()
+  }
+
+  class renderMetricCards <<function>> {
+    + renderMetricCards()
+  }
+
+  class renderPivot <<function>> {
+    + renderPivot()
+  }
+
+  class applyViewport <<function>> {
+    + applyViewport()
+  }
+
+  class renderTabular <<function>> {
+    + renderTabular()
+  }
+
+}
+
+' TS → Python API connections
+ApiClient ..> Engine : POST /api/query
+ApiClient ..> FieldResolver : GET /api/dimensions
+ApiClient ..> BronzeResolver : POST /api/bronze/query
+renderAgGrid ..> PivotHandler : table.pivot response
+renderAgGrid ..> TableDataHandler : table.data response
+renderGraphical ..> GraphicalHandler : plotly.* response
+renderMetricCards ..> MetricsHandler : cards.metric response
+
+legend right
+  174 classes in 15 directories
+  40 inheritance, 66 composition,
+  21 cross-directory dependency edges
+  ---
+  Grouped by src/de_funk/ directory structure
+  No hand-maintained match lists
+endlegend
+
+@enduml

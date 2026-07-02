@@ -1,0 +1,19 @@
+[Unit]
+Description=de_funk API backend for Obsidian plugin
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/PycharmProjects/de_Funk
+ExecStart=%h/.local/bin/python -m scripts.serve.run_api --host 0.0.0.0 --port 8765
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=defunk-api
+
+# Environment — edit path to match your Python environment
+Environment=PYTHONPATH=%h/PycharmProjects/de_Funk/src
+
+[Install]
+WantedBy=default.target

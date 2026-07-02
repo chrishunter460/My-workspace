@@ -1,0 +1,10 @@
+{
+  "id": "de-funk",
+  "name": "de-funk",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "Live charts, tables, and metrics from your Delta Lake — rendered inside Obsidian notes.",
+  "author": "de_Funk",
+  "authorUrl": "",
+  "isDesktopOnly": true
+}

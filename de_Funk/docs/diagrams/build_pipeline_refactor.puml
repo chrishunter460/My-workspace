@@ -1,0 +1,224 @@
+@startuml "Build Pipeline — Current vs Proposed"
+
+skinparam classFontName "Courier New"
+skinparam classFontSize 9
+skinparam packageFontSize 11
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam style strictuml
+skinparam nodesep 60
+skinparam ranksep 40
+
+title Build Pipeline Refactor\nCurrent State (left) vs Proposed (right)
+
+' ═══════════════════════════════════════════
+' LEFT SIDE — CURRENT STATE
+' ═══════════════════════════════════════════
+
+package "CURRENT STATE" #FFE0E0 {
+
+  package "Config Layer (reads YAML)" #FFCC66 {
+    class DomainConfigLoader {
+      + load_model_config(name)
+      - resolve extends
+      - deep merge canonical fields
+      --
+      returns: raw dict
+    }
+
+    class "config_translator ⚠" as CT <<misplaced>> {
+      .. MODEL WORK in config layer ..
+      + translate_domain_config(dict)
+      - _synthesize_node()
+      - _build_node_from_source()
+      - _build_node_from_table()
+      - _build_union_node()
+      - _extract_derive_from_schema()
+      - _aliases_to_select_dict()
+      - _enrich_to_join_specs()
+      - _get_phase_ordered_tables()
+      --
+      481 lines of interpretation logic
+      that decides WHAT to build
+    }
+  }
+
+  package "Model Layer (builds Silver)" #FF9933 {
+    class DomainModel <<current>> {
+      + custom_node_loading()
+      - _build_seed_node()
+      - _build_union_node()
+      - _build_distinct_node()
+      - _build_window_node()
+      - _build_unpivot_node()
+      --
+      Executes special node types
+      814 lines
+    }
+
+    class GraphBuilder <<current>> {
+      + build()
+      - _build_nodes()
+      - _translate_node_config()
+      --
+      Translates node dict → pipeline
+      190 lines
+    }
+
+    class NodeExecutor <<current>> {
+      + execute_node()
+      - _op_filter()
+      - _op_join()
+      - _op_select()
+      - _op_derive()
+      - _op_dedup()
+      --
+      Executes pipeline ops
+      350 lines
+    }
+  }
+
+  DomainConfigLoader --> CT : raw dict
+  CT --> DomainModel : translated dict\n(graph.nodes)
+  DomainModel --> GraphBuilder : standard nodes
+  DomainModel --> NodeExecutor : via GraphBuilder
+  GraphBuilder --> NodeExecutor : pipeline steps
+}
+
+' ═══════════════════════════════════════════
+' RIGHT SIDE — PROPOSED STATE
+' ═══════════════════════════════════════════
+
+package "PROPOSED STATE" #E0FFE0 {
+
+  package "Config Layer (reads YAML only)" #FFCC66 {
+    class "DomainConfigLoader" as DCL2 {
+      + load_model_config(name)
+      - resolve extends
+      - deep merge canonical fields
+      --
+      returns: DomainModelConfig
+      (typed, no interpretation)
+    }
+
+    class DomainModelConfig <<dataclass>> {
+      + model: str
+      + tables: dict[str, TableConfig]
+      + sources: dict[str, SourceConfig]
+      + graph: GraphSpec
+      + build: BuildSpec
+      + hooks: HooksConfig
+      --
+      Pure data — NO methods
+      NO translate(), NO get_build_plan()
+    }
+  }
+
+  package "Model Layer — Interpretation" #80E0D0 {
+    class BuildPlanner <<new>> {
+      + plan(config: DomainModelConfig)
+      --
+      .. Reads config, produces BuildPlan ..
+      - match_tables_to_sources()
+      - extract_derived_expressions()
+      - build_select_from_aliases()
+      - detect_node_types()
+      - resolve_phase_order()
+      - build_enrich_joins()
+      --
+      Moved from config_translator.py
+      Pure interpretation — no execution
+    }
+
+    class BuildPlan <<new>> {
+      + nodes: dict[str, NodeSpec]
+      + phase_order: list[list[str]]
+      + sources_by_target: dict
+      --
+      The executable build plan
+      (replaces translated dict)
+    }
+
+    class NodeSpec <<new>> {
+      + node_id: str
+      + node_type: str
+      + from_ref: str
+      + select: dict[str, str]
+      + derive: dict[str, str]
+      + filters: list[str]
+      + joins: list[JoinSpec]
+      + dedup_keys: list[str]
+      + drop_cols: list[str]
+      --
+      One table's build instructions
+      (replaces node dict)
+    }
+  }
+
+  package "Model Layer — Execution" #FF9933 {
+    class "DomainModel" as DM2 <<simplified>> {
+      + build(plan: BuildPlan)
+      - execute_seed(spec: NodeSpec)
+      - execute_union(spec: NodeSpec)
+      - execute_distinct(spec: NodeSpec)
+      - execute_window(spec: NodeSpec)
+      --
+      Receives plan, executes it
+      No config interpretation
+    }
+
+    class "GraphBuilder" as GB2 <<simplified>> {
+      + build(plan: BuildPlan)
+      --
+      Iterates plan.nodes
+      Delegates to NodeExecutor
+    }
+
+    class "NodeExecutor" as NE2 <<unchanged>> {
+      + execute_node(spec: NodeSpec)
+      - _op_filter()
+      - _op_join()
+      - _op_select()
+      - _op_derive()
+      - _op_dedup()
+      --
+      Same as current
+    }
+  }
+
+  DCL2 --> DomainModelConfig : typed config
+  DomainModelConfig --> BuildPlanner : pure data in
+  BuildPlanner --> BuildPlan : build plan out
+  BuildPlan --> DM2 : plan with NodeSpecs
+  DM2 --> GB2 : standard nodes
+  GB2 --> NE2 : pipeline steps
+  BuildPlan *-- NodeSpec : nodes
+}
+
+' ═══════════════════════════════════════════
+' DECISION TREE — What changes
+' ═══════════════════════════════════════════
+
+legend right
+  **What Moves Where**
+  |= Current Location |= Class |= Proposed Location |
+  | config/domain/config_translator.py | translate_domain_config() | models/base/build_planner.py: BuildPlanner.plan() |
+  | config/domain/config_translator.py | _synthesize_node() | BuildPlanner.detect_node_types() |
+  | config/domain/config_translator.py | _extract_derive_from_schema() | BuildPlanner.extract_derived_expressions() |
+  | config/domain/config_translator.py | _aliases_to_select_dict() | BuildPlanner.build_select_from_aliases() |
+  | config/domain/config_translator.py | _build_union_node() | BuildPlanner.detect_node_types() |
+  | config/domain/config_translator.py | _get_phase_ordered_tables() | BuildPlanner.resolve_phase_order() |
+  | config/domain/config_translator.py | _enrich_to_join_specs() | BuildPlanner.build_enrich_joins() |
+  | DomainModelConfig | translate() | REMOVED — config is pure data |
+  | DomainModelConfig | get_build_plan() | REMOVED — BuildPlanner does this |
+  | translated dict (graph.nodes) | raw dict | BuildPlan (typed) with NodeSpec objects |
+  ---
+  **What Stays**
+  | DomainConfigLoader | Still reads YAML + resolves extends |
+  | DomainModel | Still executes seed/union/distinct/window |
+  | GraphBuilder | Still orchestrates node execution |
+  | NodeExecutor | Still runs filter/join/select/derive ops |
+  | Engine + DataOps/SqlOps | Still handles backend-specific execution |
+endlegend
+
+@enduml

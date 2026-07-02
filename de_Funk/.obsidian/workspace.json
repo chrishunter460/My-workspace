@@ -1,0 +1,236 @@
+{
+  "main": {
+    "id": "27ae9f959b3356ba",
+    "type": "split",
+    "children": [
+      {
+        "id": "18db745f941a0d07",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "43f58ad1b3f12e08",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "exhibits/testing/bronze_crimes_test.md",
+                "mode": "preview",
+                "source": true
+              },
+              "icon": "lucide-file",
+              "title": "bronze_crimes_test"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "c96efae67caaa11a",
+    "type": "split",
+    "children": [
+      {
+        "id": "a10686f80aa0f903",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "64fb7dfee1797e9d",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "f0f92c9e7fc2c15e",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "e39f59d60b8a3748",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "c6549f0dec2ce60d",
+    "type": "split",
+    "children": [
+      {
+        "id": "9c6f8597dd11cad7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "27dd039f6eb04513",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "exhibits/testing/table_data_test.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for table_data_test"
+            }
+          },
+          {
+            "id": "8c3765c8b4d7b010",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "227d2bf1dbf0593c",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "e93f163147fe3431",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "1344eae54f7c58cb",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "exhibits/testing/bronze_crimes_test.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of bronze_crimes_test"
+            }
+          },
+          {
+            "id": "bb80e9578e344aa0",
+            "type": "leaf",
+            "state": {
+              "type": "de-funk-sidebar",
+              "state": {},
+              "icon": "bar-chart-2",
+              "title": "de-funk"
+            }
+          }
+        ],
+        "currentTab": 5
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "de-funk:de-funk sidebar": false,
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "64fb7dfee1797e9d",
+  "lastOpenFiles": [
+    "docs/TODO.md.tmp.2290739.1773853813905",
+    "docs/TODO.md",
+    "docs/TODO.md.tmp.2290739.1773853500332",
+    "docs/README.md.tmp.2290739.1773853142215",
+    "docs/README.md.tmp.2290739.1773853110576",
+    "docs/architecture.md.tmp.2290739.1773853095223",
+    "docs/architecture.md.tmp.2290739.1773853079904",
+    "docs/obsidian-plugin.md.tmp.2290739.1773853028441",
+    "docs/obsidian-plugin.md.tmp.2290739.1773853013476",
+    "docs/obsidian-plugin.md.tmp.2290739.1773852997302",
+    "docs/obsidian-plugin.md.tmp.2290739.1773852950380",
+    "docs/api.md.tmp.2290739.1773852922301",
+    "domains/models/municipal/sources/chicago/public_safety/crimes.md",
+    "domains/models/municipal/sources/chicago/public_safety/arrests.md",
+    "domains/models/municipal/sources/chicago/public_safety/iucr_codes.md",
+    "testing.md",
+    "domains/models/municipal/public_safety/tables/fact_arrests.md",
+    "domains/models/municipal/public_safety/tables/fact_crimes.md",
+    "domains/models/municipal/public_safety/tables/dim_location_type.md",
+    "domains/models/municipal/public_safety/tables/dim_crime_type.md",
+    "exhibits/testing/coa_explorer_test.md",
+    "exhibits/testing/table_pivot_test.md",
+    "exhibits/testing/plotly_line_test.md",
+    "docs/proposals/to do - department group cosine simularities.md",
+    "data_sources/Endpoints/Chicago Data Portal/Public Safety/Crimes.md",
+    "exhibits/testing/bronze_crimes_test.md",
+    "exhibits/testing/plotly_bar_test.md",
+    "exhibits/testing/plotly_scatter_test.md",
+    "exhibits/testing/plotly_pie_test.md",
+    "exhibits/testing/stock_analysis_test.md",
+    "to-do TUI.md",
+    "exhibits/testing/financial_statements_test.md",
+    "exhibits/testing/plotly_area_test.md",
+    "exhibits/testing/filter_ignore_test.md",
+    "exhibits/testing/plotly_box_test.md",
+    "exhibits/testing/plotly_heatmap_test.md",
+    "Untitled.canvas"
+  ]
+}

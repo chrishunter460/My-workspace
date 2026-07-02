@@ -1,0 +1,30 @@
+# Core dependencies for the Notebook Application
+
+# Web Framework
+streamlit>=1.28.0
+
+# Data Processing
+pandas>=2.0.0
+duckdb>=0.9.0  # Fast analytics engine (10-100x faster than Spark for UI)
+
+# Visualization
+plotly>=5.17.0
+great_tables>=0.12.0  # Publication-quality tables
+
+# Configuration
+pyyaml>=6.0
+markdown>=3.4.0  # For markdown notebook rendering
+
+# Graph Analysis
+networkx>=3.0  # Model dependency graph and relationship management
+
+# Storage
+pyarrow>=13.0.0  # For Parquet support
+
+# Time Series Forecasting
+statsmodels>=0.14.0  # ARIMA models
+prophet>=1.1.5  # Facebook Prophet for time series
+scikit-learn>=1.3.0  # ML models for forecasting
+
+# Optional: Spark (only needed for ETL pipelines, not for notebook UI)
+# pyspark>=3.4.0  # Uncomment if running ETL pipelines

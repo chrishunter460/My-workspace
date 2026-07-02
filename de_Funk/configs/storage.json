@@ -1,0 +1,59 @@
+{
+  "_migration_note": "v3.1: Silver paths use nested layout (municipal/entity/ not municipal_entity/). Model names use dots, paths use slashes.",
+  "connection": {
+    "type": "duckdb",
+    "comment": "Default for UI only (10-100x faster). All data pipelines (ingestion + model builds) override to 'spark'. Set CONNECTION_TYPE env var to override."
+  },
+  "api": {
+    "comment": "API query limits — tune here, not in source code.",
+    "duckdb_memory_limit": "3GB",
+    "max_sql_rows": 30000,
+    "max_dimension_values": 10000,
+    "max_response_mb": 4.0
+  },
+  "defaults": {
+    "format": "delta",
+    "comment": "Delta Lake is the default storage format for all Bronze and Silver tables. Provides ACID transactions, time travel, and schema evolution."
+  },
+  "roots": {
+    "bronze": "/shared/storage/bronze",
+    "silver": "/shared/storage/silver",
+
+    "_comment_domains": "Domain-specific roots only needed when path differs from {silver}/{model.replace('.','/')}. Most models use the automatic fallback."
+  },
+  "domain_roots": {
+    "_comment": "Override storage paths for domains whose silver path doesn't match the canonical name. Paths are relative to silver root.",
+    "securities.master": "securities",
+    "securities.stocks": "stocks",
+    "securities.forecast": "forecast"
+  },
+  "tables": {
+    "_comment_seeds": "Seed tables (not provider-specific)",
+    "calendar_seed": { "root": "bronze", "rel": "seeds/calendar", "partitions": [] },
+
+    "_comment_bronze": "Bronze table config comes from endpoint markdown files",
+    "_note_alpha_vantage": "See Data Sources/Endpoints/Alpha Vantage/*.md",
+    "_note_chicago": "See Data Sources/Endpoints/Chicago Data Portal/*.md",
+    "_note_cook_county": "See Data Sources/Endpoints/Cook County Data Portal/*.md",
+
+    "_comment_silver": "Silver layer tables (domain-based, nested layout)",
+
+    "_comment_temporal": "Temporal/Calendar domain",
+    "dim_calendar": { "root": "silver", "rel": "temporal/dims/dim_calendar" },
+
+    "_comment_securities": "Master securities domain",
+    "dim_security": { "root": "silver", "rel": "securities/dims/dim_security" },
+    "fact_security_prices": { "root": "silver", "rel": "securities/facts/fact_security_prices" },
+
+    "_comment_stocks": "Stocks domain",
+    "dim_stock": { "root": "silver", "rel": "stocks/dims/dim_stock" },
+    "fact_stock_prices": { "root": "silver", "rel": "stocks/facts/fact_stock_prices" },
+    "fact_stock_technicals": { "root": "silver", "rel": "stocks/facts/fact_stock_technicals" },
+    "fact_dividends": { "root": "silver", "rel": "stocks/facts/fact_dividends" },
+    "fact_splits": { "root": "silver", "rel": "stocks/facts/fact_splits" },
+
+    "_comment_corporate": "Corporate domain (nested: corporate/entity, corporate/finance)",
+    "dim_company": { "root": "silver", "rel": "corporate/entity/dims/dim_company" },
+    "fact_financial_statements": { "root": "silver", "rel": "corporate/finance/facts/fact_financial_statements" }
+  }
+}

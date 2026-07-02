@@ -1,0 +1,23 @@
+{
+  "run_id": "20251102_181605",
+  "pipeline_type": "data_ingestion",
+  "start_time": "2025-11-02T18:16:05.837585",
+  "end_time": "2025-11-02T18:16:05.837987",
+  "status": "failed",
+  "config": {
+    "date_from": "2024-01-01",
+    "date_to": "2025-10-31",
+    "max_tickers": null,
+    "include_news": true
+  },
+  "results": {},
+  "errors": [
+    {
+      "timestamp": "2025-11-02T18:16:05.837875",
+      "stage": "initialization",
+      "error": "Expecting value: line 8 column 25 (char 209)"
+    }
+  ],
+  "warnings": [],
+  "duration_seconds": 0.000402
+}

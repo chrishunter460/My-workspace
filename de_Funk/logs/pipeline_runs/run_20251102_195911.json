@@ -1,0 +1,33 @@
+{
+  "run_id": "20251102_195911",
+  "pipeline_type": "data_ingestion",
+  "start_time": "2025-11-02T19:59:11.204711",
+  "end_time": "2025-11-02T19:59:14.033308",
+  "status": "failed",
+  "config": {
+    "date_from": "2022-01-01",
+    "date_to": "2025-10-31",
+    "max_tickers": null,
+    "include_news": true
+  },
+  "results": {},
+  "errors": [
+    {
+      "timestamp": "2025-11-02T19:59:14.032782",
+      "stage": "validation",
+      "error": "API connection failed: Invalid API key"
+    }
+  ],
+  "warnings": [],
+  "stages": [
+    {
+      "stage": "initialization",
+      "status": "success",
+      "timestamp": "2025-11-02T19:59:13.893267",
+      "details": {
+        "spark_app": "CompanyPipeline"
+      }
+    }
+  ],
+  "duration_seconds": 2.828597
+}

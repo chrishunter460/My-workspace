@@ -1,0 +1,28 @@
+{
+  "name": "de-funk",
+  "version": "1.0.0",
+  "description": "Obsidian plugin — live de_funk exhibits from Delta Lake",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs production",
+    "deploy": "npm run build && node scripts/deploy.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "builtin-modules": "^3.3.0",
+    "esbuild": "^0.17.3",
+    "jsdom": "^24.1.0",
+    "obsidian": "latest",
+    "tslib": "^2.4.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "plotly.js-dist-min": "^2.27.0",
+    "tabulator-tables": "^6.4.0"
+  }
+}

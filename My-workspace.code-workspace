@@ -1,0 +1,67 @@
+{
+  "folders": [
+    {
+      "name": "DataMart",
+      "path": "."
+    },
+    {
+      "name": "de_Funk",
+      "path": "de_Funk"
+    },
+    {
+      "name": ".claude",
+      "path": "C:\\Users\\ChrisHunter\\.claude"
+    },
+    {
+      "name": "actuarial",
+      "path": "../actuarial"
+    },
+    {
+      "name": "clover-ma-pipelines",
+      "path": "../clover-ma-pipelines"
+    },
+    {
+      "name": "claims-accuracy",
+      "path": "../claims-accuracy"
+    },
+    {
+      "name": "clover-dev",
+      "path": "../clover-dev"
+    },
+  ],
+  "settings": {
+    "explorer.excludeGitIgnore": false,
+    "files.exclude": {
+      "**/.git": true,
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/*.pyo": true,
+      "**/*.pyd": true
+    },
+    "files.watcherExclude": {
+      "**/.venv/**": true,
+      "**/__pycache__/**": true
+    },
+    "search.exclude": {
+      "**/.venv/**": true,
+      "**/__pycache__/**": true
+    },
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "editor.formatOnSave": true,
+    "editor.rulers": [100],
+    "files.associations": {
+      "*.toml": "toml"
+    },
+    "git.openRepositoryInParentFolders": "always"
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.pylint",
+      "ms-toolsai.jupyter",
+      "snowflake.snowflake-vsc",
+      "ms-vscode-remote.remote-containers",
+      "ms-azuretools.vscode-docker"
+    ]
+  }
+}

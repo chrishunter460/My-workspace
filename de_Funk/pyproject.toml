@@ -1,0 +1,80 @@
+[project]
+name = "de_funk"
+version = "3.0.0"
+description = "A graphical overlay to a unified relational model"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    {name = "de_Funk Team"}
+]
+keywords = [
+    "data-warehouse",
+    "graph-model",
+    "yaml-driven",
+    "spark",
+    "duckdb",
+    "analytics"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "pandas>=2.0.0",
+    "pyarrow>=14.0.0",
+    "pyyaml>=6.0",
+    "duckdb>=0.9.0",
+    "networkx>=3.0",
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+spark = [
+    "pyspark>=3.5.0",
+    "delta-spark>=3.0.0",
+]
+ui = [
+    "plotly>=5.18.0",
+]
+api = [
+    "fastapi>=0.109",
+    "uvicorn[standard]>=0.27",
+    "pydantic>=2.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.4.0",
+]
+all = [
+    "de_funk[spark,ui,api,dev]",
+]
+
+[project.urls]
+Homepage = "https://github.com/de_funk/de_funk"
+Documentation = "https://github.com/de_funk/de_funk#readme"
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"de_funk" = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+

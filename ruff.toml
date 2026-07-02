@@ -1,0 +1,110 @@
+extend-exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "Makefile",
+    ".gitignore",
+    ".env",
+    ".editorconfig",
+    ".tool-versions",
+    "*.env",
+    "*.in",
+    "*.txt",
+    "*.md",
+    "*.json",
+    "*.toml",
+    "*.yml",
+    "*.yaml",
+    "*.sql",
+    "*.csv",
+    "*.sh",
+    "*.html",
+    "*.jinja",
+    "*.ini",
+    "*.rst",
+    "*.template",
+    "LICENSE",
+    "requirements.*",
+    "Dockerfile",
+    "Dockerfile*",
+    "*Dockerfile*",
+]
+
+line-length = 88
+indent-width = 4
+
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "PL", "PLR", "PLW"]
+ignore = [
+    "E231",
+    "E721",
+    "E501",
+    "E203",
+    "F401",
+    "F841",
+    "W605",
+    "PLR0913",
+    "PLR2004",
+    "PLW2901",
+    "PLR0904",
+    "PLR0917",
+    "PLR0914",
+    "PLR0911",
+    "PLR0912",
+    "PLR0915",
+    "PLC0415",
+]
+
+fixable = ["ALL"]
+unfixable = []
+
+[lint.isort]
+combine-as-imports = false
+length-sort = true
+force-single-line = true
+force-sort-within-sections = true
+order-by-type = true
+known-first-party = [
+    "de_funk",
+    "DataMart",
+]
+
+[lint.pylint]
+max-public-methods = 30
+
+[lint.per-file-ignores]
+"__init__.py" = ["E402"]
+"!tests/**.py" = ["PLR2004"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"

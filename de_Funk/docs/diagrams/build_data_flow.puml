@@ -1,0 +1,168 @@
+@startuml "Build Data Flow — Config to Silver"
+
+skinparam classFontName "Courier New"
+skinparam classFontSize 9
+skinparam activityFontSize 9
+skinparam noteFontSize 8
+
+title Build Data Flow: YAML Config → Silver Tables\nShowing where each config field becomes an operation
+
+|Config Loading|
+start
+:Read model.md YAML frontmatter;
+:Read tables/*.md (schema, primary_key, table_type);
+:Read sources/**/*.md (aliases, filter, discriminator);
+
+:Resolve **extends**
+  _base.entity.company → deep_merge parent fields;
+note right
+  **extends.py**
+  resolve_extends_reference()
+  deep_merge(parent, child)
+  Canonical fields injected here
+end note
+
+:Return DomainModelConfig
+  (typed dataclass, pure data);
+
+|Interpretation|
+:Match tables ↔ sources
+  Which Bronze table feeds which Silver table?;
+note right
+  **config_translator.py** (CURRENT)
+  **BuildPlanner** (PROPOSED)
+  _synthesize_node()
+end note
+
+:For each table, determine node type;
+
+if (has seed data?) then (yes)
+  :Create **seed** node
+  inline rows → DataFrame;
+elseif (multiple sources?) then (yes)
+  :Create **union** node
+  UNION ALL sources;
+elseif (transform: distinct?) then (yes)
+  :Create **distinct** node
+  GROUP BY / DISTINCT;
+elseif (transform: window?) then (yes)
+  :Create **window** node
+  partition + order + indicators;
+elseif (transform: unpivot?) then (yes)
+  :Create **unpivot** node
+  STACK expression;
+else (standard)
+  :Create **standard** node
+  from Bronze, apply select/derive/filter;
+endif
+
+:Extract **select** mapping
+  source aliases → {target_col: source_expr};
+note right
+  **config_translator.py:403**
+  _aliases_to_select_dict()
+  Each alias pair becomes
+  a column rename/expression
+end note
+
+:Extract **derive** expressions
+  schema {derived: "ABS(HASH(...))"} → {col: expr};
+note right
+  **config_translator.py:419**
+  _extract_derive_from_schema()
+  Calculated fields extracted here
+end note
+
+:Extract **filter** conditions
+  source filter → WHERE clauses;
+
+:Extract **dedup** keys
+  unique_key or primary_key → dropDuplicates;
+
+:Order by **build phases**
+  phase 1 → phase 2 → phase 3;
+note right
+  Phase ordering ensures
+  dim tables built before
+  fact tables that reference them
+end note
+
+:Produce **BuildPlan**
+  list of NodeSpec objects;
+
+|Execution|
+:For each NodeSpec in phase order;
+
+if (node_type?) then (seed)
+  :DomainModel._build_seed_node()
+  Create DataFrame from inline data
+  Apply derived columns;
+elseif (union) then
+  :DomainModel._build_union_node()
+  Load each source from Bronze
+  Apply aliases/filters per source
+  UNION ALL with discriminators;
+elseif (distinct) then
+  :DomainModel._build_distinct_node()
+  Load source, GROUP BY keys
+  Aggregate or deduplicate;
+elseif (window) then
+  :DomainModel._build_window_node()
+  Load source table
+  Apply window functions (SMA, RSI, etc);
+else (standard)
+  :GraphBuilder → NodeExecutor pipeline;
+  :1. _op_filter(conditions);
+  :2. _op_join(right_table, on, how);
+  :3. _op_select(columns);
+  :4. _op_derive(expressions);
+  :5. _op_dedup(keys);
+  note right
+    Each op delegates to
+    **Engine** → **DataOps/SqlOps**
+    Backend-agnostic execution
+  end note
+endif
+
+:Run **after_build** hooks
+  HookRunner dispatches YAML hooks
+  e.g. CIK enrichment;
+
+:Run **post_build** hooks
+  e.g. ML training → ArtifactStore;
+
+:Write table to Silver
+  Engine.write(df, path, format="delta")
+  Optimize + vacuum;
+
+|Silver|
+:Delta Lake table ready
+  /shared/storage/silver/{domain}/{dims|facts}/{table};
+
+stop
+
+legend right
+  | Color | Layer |
+  |<#FFCC66> Gold | Config (reads YAML) |
+  |<#80E0D0> Teal | Interpretation (config → plan) |
+  |<#FF9933> Orange | Execution (plan → DataFrames) |
+  |<#B3FFB3> Green | Silver (output) |
+  ---
+  **Key insight**: The Interpretation layer
+  currently lives in config/domain/config_translator.py
+  but should be in models/base/build_planner.py
+  
+  Config fields → Operations mapping:
+  | schema.derived | → derive expressions |
+  | source.aliases | → select mapping |
+  | source.filter | → WHERE conditions |
+  | unique_key | → dedup keys |
+  | build.phases | → execution order |
+  | hooks | → lifecycle callbacks |
+  | seed data | → inline DataFrame |
+  | multiple sources | → UNION ALL |
+  | transform: distinct | → GROUP BY |
+  | transform: window | → window functions |
+endlegend
+
+@enduml

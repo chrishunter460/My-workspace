@@ -1,0 +1,126 @@
+---
+type: api-endpoint
+provider: Alpha Vantage
+endpoint_id: cash_flow
+
+# API Configuration
+endpoint_pattern: ""
+method: GET
+format: json
+auth: inherit
+response_key: null
+
+# Query Parameters
+default_query:
+  function: CASH_FLOW
+required_params: [symbol]
+
+# Pagination
+pagination_type: none
+bulk_download: false
+
+# Spark JSON Reading
+json_structure: array_reports
+json_structure_comment: "Contains annualReports and quarterlyReports arrays. Requires union + explode in Spark."
+
+# Metadata
+domain: finance
+legal_entity_type: vendor
+subject_entity_tags: [corporate]
+data_tags: [fundamentals, financial-statements, quarterly, annual]
+status: active
+update_cadence: quarterly
+last_verified:
+last_reviewed:
+notes: "Returns both annualReports and quarterlyReports arrays"
+
+# Storage Configuration
+bronze: alpha_vantage
+partitions: [report_type]
+write_strategy: upsert
+key_columns: [ticker, fiscal_date_ending, report_type]
+date_column: fiscal_date_ending
+
+# Facet Configuration - drives generic facet behavior
+facet_config:
+  response_arrays:
+    annualReports: annual
+    quarterlyReports: quarterly
+  fixed_fields:
+    ticker: symbol
+    fiscal_date_ending: fiscalDateEnding
+    reported_currency: reportedCurrency
+
+# Schema
+# Format: [field_name, type, source_field, nullable, description, {options}]
+# Options: transform, coerce, expr, default
+schema:
+  # Identifiers
+  - [ticker, string, symbol, false, "Stock ticker"]
+  - [fiscal_date_ending, date, fiscalDateEnding, false, "End of fiscal period", {transform: "to_date(yyyy-MM-dd)"}]
+  - [report_type, string, _generated, false, "annual or quarterly"]
+  - [reported_currency, string, reportedCurrency, true, "Reporting currency"]
+
+  # Operating activities
+  - [operating_cashflow, long, operatingCashflow, true, "Cash from operations", {coerce: long}]
+  - [payments_for_operating_activities, long, paymentsForOperatingActivities, true, "Operating payments", {coerce: long}]
+  - [proceeds_from_operating_activities, long, proceedsFromOperatingActivities, true, "Operating proceeds", {coerce: long}]
+  - [change_in_operating_liabilities, long, changeInOperatingLiabilities, true, "Change in op liabilities", {coerce: long}]
+  - [change_in_operating_assets, long, changeInOperatingAssets, true, "Change in op assets", {coerce: long}]
+  - [depreciation_depletion_amortization, long, depreciationDepletionAndAmortization, true, "D&A", {coerce: long}]
+  - [capital_expenditures, long, capitalExpenditures, true, "CapEx", {coerce: long}]
+  - [change_in_receivables, long, changeInReceivables, true, "Change in receivables", {coerce: long}]
+  - [change_in_inventory, long, changeInInventory, true, "Change in inventory", {coerce: long}]
+  - [profit_loss, long, profitLoss, true, "Net profit/loss", {coerce: long}]
+
+  # Investing activities
+  - [cashflow_from_investment, long, cashflowFromInvestment, true, "Cash from investing", {coerce: long}]
+
+  # Financing activities
+  - [cashflow_from_financing, long, cashflowFromFinancing, true, "Cash from financing", {coerce: long}]
+  - [proceeds_from_short_term_debt, long, proceedsFromRepaymentsOfShortTermDebt, true, "Short-term debt proceeds", {coerce: long}]
+  - [payments_for_repurchase_common, long, paymentsForRepurchaseOfCommonStock, true, "Buyback payments", {coerce: long}]
+  - [payments_for_repurchase_equity, long, paymentsForRepurchaseOfEquity, true, "Equity repurchase", {coerce: long}]
+  - [payments_for_repurchase_preferred, long, paymentsForRepurchaseOfPreferredStock, true, "Preferred repurchase", {coerce: long}]
+  - [dividend_payout, long, dividendPayout, true, "Dividends paid", {coerce: long}]
+  - [dividend_payout_common, long, dividendPayoutCommonStock, true, "Common dividends", {coerce: long}]
+  - [dividend_payout_preferred, long, dividendPayoutPreferredStock, true, "Preferred dividends", {coerce: long}]
+  - [proceeds_from_common_stock, long, proceedsFromIssuanceOfCommonStock, true, "Stock issuance proceeds", {coerce: long}]
+  - [proceeds_from_long_term_debt, long, proceedsFromIssuanceOfLongTermDebtAndCapitalSecuritiesNet, true, "LT debt proceeds", {coerce: long}]
+  - [proceeds_from_preferred_stock, long, proceedsFromIssuanceOfPreferredStock, true, "Preferred stock proceeds", {coerce: long}]
+  - [proceeds_from_repurchase_equity, long, proceedsFromRepurchaseOfEquity, true, "Equity repurchase proceeds", {coerce: long}]
+  - [proceeds_from_treasury_stock, long, proceedsFromSaleOfTreasuryStock, true, "Treasury stock proceeds", {coerce: long}]
+
+  # Net change
+  - [net_change_in_cash, long, changeInCashAndCashEquivalents, true, "Net change in cash", {coerce: long}]
+  - [change_in_exchange_rate, long, changeInExchangeRate, true, "FX impact", {coerce: long}]
+  - [net_income, long, netIncome, true, "Net income", {coerce: long}]
+
+  # Computed fields
+  - [free_cash_flow, long, _computed, true, "Operating cash flow minus CapEx", {expr: "operating_cashflow - abs(capital_expenditures)"}]
+
+  # Metadata (generated by ingestion pipeline)
+  - [ingestion_timestamp, timestamp, _generated, false, "When data was ingested"]
+  - [snapshot_date, date, _generated, false, "Date of ingestion snapshot"]
+---
+
+## Description
+
+Annual and quarterly cash flow statement data including operating, investing, and financing activities. Returns both `annualReports` and `quarterlyReports` arrays.
+
+## Request Notes
+
+- Operating, investing, financing sections each contain multiple line items
+- Negative values indicate cash outflows
+
+## Homelab Usage
+
+```bash
+python -m scripts.ingest.run_bronze_ingestion --endpoints cash_flow --tickers AAPL MSFT
+```
+
+## Known Quirks
+
+1. **String numerics**: All values as strings including "None"
+2. **Sign convention**: CapEx typically negative, dividends negative
+3. **Historical depth**: ~5 years annual, ~5 years quarterly

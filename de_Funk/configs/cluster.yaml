@@ -1,0 +1,234 @@
+# Cluster Configuration for de_Funk
+# Version: 2.0
+#
+# This configuration defines settings for distributed computing with Spark
+# and scheduled jobs with Airflow.
+#
+# Usage:
+#   - Copy to ~/.de_funk/cluster.yaml for user-specific settings
+#   - Or set DEFUNK_CLUSTER_CONFIG env var to point to custom location
+
+# =============================================================================
+# CLUSTER TOPOLOGY
+# =============================================================================
+# Defines head node and worker nodes for Spark cluster
+
+cluster:
+  # Head node configuration
+  head:
+    hostname: bigbark
+    ip: "192.168.1.212"
+    user: ms_trixie
+
+  # Worker nodes
+  # Note: Leave ~2 cores and ~4-6GB RAM for OS overhead
+  workers:
+    - name: bark-1
+      ip: "192.168.1.207"
+      cores: 10        # Machine has 12 cores total
+      memory_gb: 10    # Machine has 16GB total
+
+    - name: bark-2
+      ip: "192.168.1.202"
+      cores: 10
+      memory_gb: 10
+
+    - name: bark-3
+      ip: "192.168.1.203"
+      cores: 10
+      memory_gb: 10
+
+# =============================================================================
+# SPARK CLUSTER SETTINGS
+# =============================================================================
+spark:
+  # Master configuration
+  master:
+    port: 7077
+    ui_port: 8080
+    # Memory for Spark Master JVM
+    memory: 1g
+
+  # Default Spark session configuration
+  session:
+    driver_memory: 4g
+    executor_memory: 4g
+    shuffle_partitions: 200
+
+  # Packages (loaded via Ivy)
+  packages:
+    - "io.delta:delta-spark_2.13:4.0.0"
+
+# =============================================================================
+# AIRFLOW SETTINGS
+# =============================================================================
+airflow:
+  port: 8081
+  # Uses separate Python 3.12 venv (Airflow doesn't support 3.13 yet)
+  venv_path: ~/airflow-venv
+
+# =============================================================================
+# SHARED STORAGE SETTINGS
+# =============================================================================
+# NOTE: The actual storage path is defined in configs/pipelines/run_config.json
+# as the single source of truth. This section provides NFS server details for
+# setup scripts only.
+storage:
+  # Storage type: "local" or "nfs"
+  # For distributed cluster, use "nfs" with shared storage
+  type: nfs
+
+  # Local storage paths (relative to repo root) - for local development only
+  local:
+    bronze: "storage/bronze"
+    silver: "storage/silver"
+    forecasts: "storage/forecasts"
+
+  # NFS settings (for cluster mode)
+  # NOTE: mount_point should match run_config.json storage_path
+  nfs:
+    # NFS mount point on workers (matches run_config.json storage_path)
+    mount_point: "/shared/storage"
+    # NFS server settings (for setup reference)
+    server:
+      host: "192.168.1.100"
+      export_path: "/home/de_funk/storage"
+
+  # Repo code sharing (for distributed Spark tasks)
+  # Setup: scripts/spark-cluster/setup-head.sh
+  repo_nfs:
+    # Head node exports the repo for workers to access
+    enabled: true
+    head_node: "192.168.1.212"
+    export_path: "/home/ms_trixie/PycharmProjects/de_Funk"
+    mount_point: "/shared/de_Funk"
+
+# =============================================================================
+# SCHEDULER SETTINGS
+# =============================================================================
+scheduler:
+  # Enable scheduler
+  enabled: true
+
+  # Timezone for cron schedules
+  timezone: "America/New_York"
+
+  # Default jobs
+  jobs:
+    daily_market_cap_refresh:
+      enabled: true
+      description: "Refresh market cap rankings"
+      schedule:
+        hour: 6
+        minute: 0
+      settings:
+        max_tickers: 1000
+
+    daily_price_ingestion:
+      enabled: true
+      description: "Ingest daily prices after market close"
+      schedule:
+        hour: 16
+        minute: 30
+      settings:
+        max_tickers: 500
+        data_types: ["prices"]
+        use_market_cap: true
+
+    daily_silver_rebuild:
+      enabled: true
+      description: "Rebuild silver layer models"
+      schedule:
+        hour: 5
+        minute: 0
+      settings:
+        models: ["temporal", "company", "stocks", "macro"]
+
+    weekly_forecasts:
+      enabled: true
+      description: "Run full forecast on cluster"
+      schedule:
+        day_of_week: "sun"
+        hour: 2
+        minute: 0
+      settings:
+        max_tickers: 500
+        models: ["arima"]
+        horizon: 30
+        use_cluster: true
+
+# =============================================================================
+# INGESTION SETTINGS
+# =============================================================================
+ingestion:
+  # Default batch size for ingestion
+  batch_size: 20
+
+  # Auto-compact Delta tables after ingestion
+  auto_compact: true
+
+  # Rate limiting (requests per second) - Pro tier: 75 calls/min = 1.25/sec
+  rate_limit: 1.25
+
+  # Retry settings
+  max_retries: 3
+  retry_delay_seconds: 2.0
+
+# =============================================================================
+# PIPELINE SETTINGS
+# =============================================================================
+pipeline:
+  # Default max tickers for pipeline runs (use top N by market cap)
+  max_tickers: 100
+
+  # Model-specific overrides
+  model_defaults:
+    forecast:
+      max_tickers: 30      # Forecasting is expensive, limit to top 30
+    stocks:
+      max_tickers: 500     # Stocks can handle more
+    company:
+      max_tickers: 500
+
+  # Use market cap ranking to select tickers
+  use_market_cap_ranking: true
+
+# =============================================================================
+# FORECASTING SETTINGS
+# =============================================================================
+forecasting:
+  # Minimum data points required for forecasting
+  min_data_points: 60
+
+  # Default forecast horizon (days)
+  default_horizon: 30
+
+  # Max tickers for forecast runs (can override pipeline.model_defaults.forecast)
+  max_tickers: 30
+
+  # Available models
+  models:
+    arima:
+      enabled: true
+      order: [5, 1, 0]
+    prophet:
+      enabled: true
+      daily_seasonality: false
+      yearly_seasonality: true
+    ets:
+      enabled: true
+      trend: "add"
+      damped: true
+
+# =============================================================================
+# MONITORING SETTINGS
+# =============================================================================
+monitoring:
+  # Enable metrics collection
+  metrics_enabled: true
+
+  # Log level for pipeline operations
+  log_level: "INFO"
+
+  # Progress display mode: "minimal" or "verbose"
+  progress_mode: "minimal"

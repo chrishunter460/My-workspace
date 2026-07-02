@@ -1,0 +1,377 @@
+/* de-funk plugin styles */
+
+/* ── Block container ──────────────────────────── */
+.de-funk-block {
+  margin: 1em 0;
+}
+
+.de-funk-loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ── Error card ───────────────────────────────── */
+.de-funk-error {
+  padding: 12px 16px;
+  background: var(--background-modifier-error);
+  border-left: 3px solid var(--color-red);
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.de-funk-error strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* ── Charts ───────────────────────────────────── */
+.de-funk-chart {
+  width: 100%;
+  min-height: 200px;
+  border-radius: 6px;
+}
+
+/* ── Tables ───────────────────────────────────── */
+.de-funk-table-title {
+  font-size: 1em;
+  margin-bottom: 8px;
+  color: var(--text-normal);
+}
+
+.de-funk-download {
+  margin-top: 8px;
+  font-size: 0.82em;
+  padding: 3px 10px;
+  cursor: pointer;
+  background: var(--interactive-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 3px;
+  color: var(--text-normal);
+}
+
+.de-funk-download:hover {
+  background: var(--interactive-hover);
+}
+
+/* ── Metric cards ─────────────────────────────── */
+.de-funk-metrics-title {
+  font-size: 1em;
+  margin-bottom: 8px;
+}
+
+.de-funk-metrics-grid {
+  display: grid;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.de-funk-metric-card {
+  background: var(--background-secondary);
+  border-radius: 6px;
+  padding: 12px 16px;
+  border: 1px solid var(--background-modifier-border);
+  min-width: 120px;
+}
+
+.de-funk-metric-value {
+  font-size: 1.5em;
+  font-weight: 700;
+  color: var(--text-normal);
+}
+
+.de-funk-metric-label {
+  font-size: 0.82em;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ── Config panel ─────────────────────────────── */
+.de-funk-config-panel {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 8px 0;
+}
+
+.de-funk-config-panel h4 {
+  margin: 0 0 10px;
+  font-size: 0.95em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.de-funk-control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.de-funk-control-row label {
+  min-width: 80px;
+  font-size: 0.88em;
+  color: var(--text-muted);
+}
+
+.de-funk-control-row select,
+.de-funk-control-row button {
+  font-size: 0.88em;
+  padding: 2px 8px;
+  border-radius: 3px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  cursor: pointer;
+}
+
+/* ── Checkbox list (multi-select controls) ─────── */
+.de-funk-control-block {
+  margin-bottom: 8px;
+}
+
+.de-funk-checkbox-list {
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  padding: 2px 0;
+  margin-top: 2px;
+}
+
+.de-funk-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  font-size: 0.85em;
+  cursor: pointer;
+}
+
+.de-funk-checkbox-row:hover {
+  background: var(--background-modifier-hover);
+}
+
+.de-funk-checkbox-row input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.de-funk-checkbox-label {
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Active config footer ─────────────────────── */
+.de-funk-footer {
+  margin-top: 4px;
+}
+
+.de-funk-footer details summary {
+  font-size: 0.78em;
+  color: var(--text-faint);
+  cursor: pointer;
+  list-style: none;
+}
+
+.de-funk-footer details summary::-webkit-details-marker {
+  display: none;
+}
+
+/* ── Sidebar ──────────────────────────────────── */
+.de-funk-sidebar {
+  padding: 10px;
+  font-size: 0.9em;
+}
+
+.de-funk-refresh-btn {
+  width: 100%;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+  font-size: 0.85em;
+  cursor: pointer;
+  background: var(--interactive-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  color: var(--text-normal);
+}
+.de-funk-refresh-btn:hover {
+  background: var(--interactive-hover);
+}
+
+.de-funk-sidebar-empty {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.de-funk-section {
+  margin-bottom: 12px;
+}
+
+.de-funk-section > summary {
+  font-weight: 600;
+  font-size: 0.88em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 0;
+  list-style: none;
+}
+
+.de-funk-section > summary::before {
+  content: "▼ ";
+}
+
+.de-funk-section:not([open]) > summary::before {
+  content: "▶ ";
+}
+
+.de-funk-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+}
+
+.de-funk-filter-label {
+  min-width: 60px;
+  font-size: 0.85em;
+  color: var(--text-normal);
+}
+
+.de-funk-filter-select,
+.de-funk-filter-date {
+  font-size: 0.85em;
+  padding: 2px 6px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 3px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  flex: 1;
+}
+
+/* ── Filter tag/chip select ───────────────────── */
+.de-funk-filter-block {
+  padding: 4px 8px 6px;
+}
+
+/* Row of selected chips */
+.de-funk-tag-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 22px;
+  margin: 3px 0 4px;
+}
+
+.de-funk-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-radius: 10px;
+  padding: 1px 7px 1px 8px;
+  font-size: 0.78em;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.de-funk-tag-remove {
+  cursor: pointer;
+  opacity: 0.75;
+  font-size: 1.1em;
+  line-height: 1;
+}
+.de-funk-tag-remove:hover { opacity: 1; }
+
+/* Search bar above picker */
+.de-funk-picker-search {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.de-funk-picker-search:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+/* Scrollable picker list */
+.de-funk-picker {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+}
+
+.de-funk-picker-row {
+  padding: 3px 10px;
+  font-size: 0.83em;
+  cursor: pointer;
+  color: var(--text-normal);
+}
+.de-funk-picker-row:hover { background: var(--background-modifier-hover); }
+.de-funk-picker-selected {
+  color: var(--interactive-accent);
+  font-weight: 500;
+}
+.de-funk-picker-selected::before { content: "✓ "; }
+
+.de-funk-picker-loading,
+.de-funk-picker-error {
+  padding: 6px 10px;
+  font-size: 0.82em;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+
+/* ── Truncation / empty states ─────────────────── */
+.de-funk-truncation-warning {
+  background: var(--background-modifier-warning);
+  color: var(--text-warning);
+  border-left: 3px solid var(--color-yellow);
+  padding: 4px 10px;
+  font-size: 0.82em;
+  margin-bottom: 6px;
+  border-radius: 3px;
+}
+
+.de-funk-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 12px 0;
+  text-align: center;
+}
+
+/* ── Tabulator ───────────────────────────────── */
+.de-funk-tabulator {
+  width: 100%;
+}
+
+.de-funk-tabulator .tabulator-col-group .tabulator-col-group-cols {
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* Row label columns — bold text */
+.de-funk-row-label {
+  font-weight: 500;
+}
+
+/* Spanner headers — centered */
+.de-funk-tabulator .tabulator-col-group > .tabulator-col-title {
+  text-align: center;
+}

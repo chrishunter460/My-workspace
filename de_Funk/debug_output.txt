@@ -1,0 +1,19 @@
+2025-12-09 04:57:43 [DEBUG   ] config.logging: Logging initialized: console=DEBUG, file=DEBUG, dir=/home/ms_trixie/PycharmProjects/de_Funk/logs
+==================================================
+  Starting Notebook Application (DuckDB)
+==================================================
+
+2025-12-09 04:57:43 [INFO    ] __main__: Starting notebook application
+Starting Streamlit application...
+
+The app will open in your browser at: http://localhost:8501
+
+Press Ctrl+C to stop the server.
+
+2025-12-09 04:57:43 [INFO    ] __main__: Launching Streamlit: /home/ms_trixie/PycharmProjects/de_Funk/app/ui/notebook_app_duckdb.py
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://192.168.1.212:8501
+
